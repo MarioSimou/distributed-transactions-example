@@ -6,6 +6,6 @@ This is a pet project experimenting with distributed transactions and [SAGA patt
 
 ### Resources
 
-[Oracle](https://docs.oracle.com/cd/A87860_01/doc/server.817/a76960/ds_txns.htm#7755)
-[Live Talk from Chris Richardson](https://www.youtube.com/watch?v=kyNL7yCvQQc)
-[Handling Distributed Transactions in the Microservice world](https://medium.com/swlh/handling-transactions-in-the-microservice-world-c77b275813e0)
+- [Oracle](https://docs.oracle.com/cd/A87860_01/doc/server.817/a76960/ds_txns.htm#7755)
+- [Live Talk from Chris Richardson](https://www.youtube.com/watch?v=kyNL7yCvQQc)
+- [Handling Distributed Transactions in the Microservice world](https://medium.com/swlh/handling-transactions-in-the-microservice-world-c77b275813e0)
