@@ -1,0 +1,7 @@
+FROM golang:1.13-buster
+
+RUN go get github.com/cespare/reflex
+WORKDIR /go/src/app
+COPY . .
+EXPOSE 3000
+CMD reflex -r '\.go$' -d fancy -s -- go run main.go
