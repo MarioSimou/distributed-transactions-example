@@ -1,1 +1,5 @@
 /bin
+/services/customers/pkg
+/services/customers/src
+/services/products/pkg
+/services/products/src

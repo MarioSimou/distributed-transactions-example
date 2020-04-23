@@ -1,7 +1,27 @@
 FROM golang:1.13-buster
 
-RUN go get github.com/cespare/reflex
+ARG DB_URI
+ENV DB_URI="$DB_URI"
+
+# jet = schema generator
+# migrate = migration tool for postgresql
+
+RUN echo "${DB_URI}"
+RUN apt-get update \
+    && apt-get install figlet -y \
+    && go get github.com/cespare/reflex \
+    && go get -u github.com/go-jet/jet \
+    && go get github.com/go-sql-driver/mysql \
+    && go get github.com/google/uuid \
+    && go get github.com/lib/pq \
+    && go get github.com/stretchr/testify \
+    && go install github.com/go-jet/jet/cmd/jet \
+    && go get -u -d github.com/golang-migrate/migrate/cmd/migrate \
+    && cd $GOPATH/src/github.com/golang-migrate/migrate/cmd/migrate \
+    && git checkout $TAG \
+    && go build -tags 'postgres' -ldflags="-X main.Version=$(git describe --tags)" -o $GOPATH/bin/migrate $GOPATH/src/github.com/golang-migrate/migrate/cmd/migrate
 WORKDIR /go/src/app
 COPY . .
 EXPOSE 3000
-CMD reflex -r '\.go$' -d fancy -s -- go run main.go
+ENTRYPOINT [ "database/scripts/run_migrations.sh" ]
+CMD reflex -r '\.go$' -d fancy -s -- go run cmd/customers/main.go

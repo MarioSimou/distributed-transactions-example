@@ -4,4 +4,4 @@ RUN go get github.com/cespare/reflex
 WORKDIR /go/src/app
 COPY . .
 EXPOSE 3000
-CMD reflex -r '\.go$' -d fancy -s -- go run main.go
+CMD reflex -r '\.go$' -d fancy -s -- go run cds/products/main.go
