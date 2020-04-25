@@ -6,7 +6,6 @@ ENV DB_URI="$DB_URI"
 # jet = schema generator
 # migrate = migration tool for postgresql
 
-RUN echo "${DB_URI}"
 RUN apt-get update \
     && apt-get install figlet -y \
     && go get github.com/cespare/reflex \

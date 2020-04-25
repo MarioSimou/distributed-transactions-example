@@ -55,35 +55,38 @@ services:
         source: customers_db_data
         target: /var/lib/postgresql/data
     restart: on-failure
-  # products:
-  #   container_name: products
-  #   image: msimou/products:distributed-transactions
-  #   build:
-  #     context: ./services/products
-  #     dockerfile: ./deployments/dockerfile
-  #   ports:
-  #     - 4000:4000
-  #   environment: 
-  #     - PORT=4000
-  #   volumes: 
-  #     - type: bind
-  #       source: $PWD/services/products
-  #       target: /go/src/app
-  #   depends_on: 
-  #     - products_db
-  #     - queue
-  #   restart: on-failure
-  # products_db:
-  #   container_name: products_db
-  #   image: postgres:12
-  #   ports:
-  #     - 5433:5432
-  #   environment: 
-  #     - POSTGRES_PASSWORD=$USER
-  #     - POSTGRES_USER=$USER
-  #     - POSTGRES_DB=products
-  #   volumes:
-  #     - type: volume
-  #       source: products_db_data
-  #       target: /var/lib/postgresql/data
-  #   restart: on-failure
+  products:
+    container_name: products
+    image: msimou/products:distributed-transactions
+    build:
+      context: ./services/products
+      dockerfile: ./deployments/dockerfile
+      args: 
+        - DB_URI=postgresql://$USER:$USER@products_db:5432/products?sslmode=disable
+    ports:
+      - 4000:4000
+    environment: 
+      - PORT=4000
+      - DB_URI=postgresql://$USER:$USER@products_db:5432/products?sslmode=disable
+    volumes: 
+      - type: bind
+        source: $PWD/services/products
+        target: /go/src/app
+    depends_on: 
+      - products_db
+      # - queue
+    restart: on-failure
+  products_db:
+    container_name: products_db
+    image: postgres:12
+    ports:
+      - 5433:5432
+    environment: 
+      - POSTGRES_PASSWORD=$USER
+      - POSTGRES_USER=$USER
+      - POSTGRES_DB=products
+    volumes:
+      - type: volume
+        source: products_db_data
+        target: /var/lib/postgresql/data
+    restart: on-failure
