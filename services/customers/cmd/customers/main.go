@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"os"
 
@@ -12,7 +13,7 @@ import (
 
 func main(){
 	var envVariables = c.EnvironmentVariables{
-		Port: ":3000",
+		Port: "3000",
 	}
 
 	var server = c.Server{
@@ -64,5 +65,5 @@ func main(){
 	}
 	var router = server.Setup(routes)
 
-	router.Run(envVariables.Port)
+	router.Run(fmt.Sprintf(":%s", envVariables.Port))
 }

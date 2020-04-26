@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 	"time"
@@ -16,7 +17,7 @@ import (
 
 type Controller struct {
 	EnvVariables EnvironmentVariables
-	DB qrm.DB
+	DB *sql.DB
 }
 
 func (contr *Controller) Ping(c *gin.Context){
@@ -51,11 +52,11 @@ func (contr *Controller) GetUsers(c *gin.Context){
 	var statement = Users.SELECT(Users.AllColumns).FROM(Users)
 
 	if e := statement.Query(contr.DB, &dest); e != nil {
-		if e == qrm.ErrNoRows {
-			c.JSON(http.StatusNotFound, Response{Status: http.StatusNotFound, Success:false, Message: e.Error()})
-		} else {
-			c.JSON(http.StatusInternalServerError, Response{Status: http.StatusInternalServerError, Success:false, Message: e.Error()})
-		}
+		c.JSON(http.StatusInternalServerError, Response{Status: http.StatusInternalServerError, Success:false, Message: e.Error()})
+		return
+	}
+	if len(dest) == 0 {
+		c.JSON(http.StatusNotFound, Response{Status: http.StatusNotFound, Success:false, Message: "User not found"})
 		return
 	}
 
@@ -63,7 +64,7 @@ func (contr *Controller) GetUsers(c *gin.Context){
 }
 
 func (contr *Controller) CreateUser(c *gin.Context){
-	var user User
+	var user postUserBody
 	var dest model.Users
 	if e := c.ShouldBindJSON(&user); e != nil {
 		c.JSON(http.StatusBadRequest, Response{Status: http.StatusBadRequest, Success:false, Message: e.Error()})
@@ -87,7 +88,6 @@ func (contr *Controller) CreateUser(c *gin.Context){
 		).RETURNING(Users.AllColumns)
 		
 	if e := statement.Query(contr.DB, &dest); e != nil {
-		fmt.Println("Error: ", e)
 		c.JSON(http.StatusInternalServerError, Response{Status: http.StatusInternalServerError, Success:false, Message: e.Error()})
 		return
 	}
@@ -98,27 +98,30 @@ func (contr *Controller) CreateUser(c *gin.Context){
 
 func (contr *Controller) DeleteUser(c *gin.Context){
 	var userId userId
-	var user model.Users
+	var e error
+	var result sql.Result
 
 	if e := c.ShouldBindUri(&userId); e != nil {
 		c.JSON(http.StatusBadRequest, Response{Status: http.StatusBadRequest, Success:false, Message: e.Error()})
 		return
 	}
-	var statement = Users.DELETE().WHERE(Users.ID.EQ(Int(userId.Id))).RETURNING(Users.ID)
-	if e := statement.Query(contr.DB, &user) ; e != nil {
-		if e == qrm.ErrNoRows {
-			c.JSON(http.StatusNotFound, Response{Status: http.StatusNotFound, Success:false, Message: e.Error()})
-		} else {
-			c.JSON(http.StatusInternalServerError, Response{Status: http.StatusInternalServerError, Success:false, Message: e.Error()})
-		}
+	var statement = Users.
+										DELETE().
+										WHERE(Users.ID.EQ(Int(userId.Id)))
+
+	if result, e = statement.Exec(contr.DB); e != nil {
+		c.JSON(http.StatusInternalServerError, Response{Status: http.StatusInternalServerError, Success:false, Message: e.Error()})
 		return
+	}			
+	if n, _ := result.RowsAffected(); n == 0 {
+		c.JSON(http.StatusNotFound, Response{Status: http.StatusNotFound, Success:false, Message: qrm.ErrNoRows.Error()})
 	}
 
 	c.JSON(http.StatusNoContent, Response{Status: http.StatusNoContent, Success: true})
 }
 
 func (contr *Controller) UpdateUser(c *gin.Context){
-	var body UpdateUserBody
+	var body updateUserBody
 	var dest model.Users
 	var userId userId
 	var existingUser model.Users

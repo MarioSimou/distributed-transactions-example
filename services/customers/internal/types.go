@@ -20,7 +20,7 @@ type userId struct {
 	Id int64 `uri:"id" binding:"required"`
 } 
 
-type User struct {
+type postUserBody struct {
 	ID        int32 `sql:"primary_key"`
 	Username  string `json:"username" binding:"required"`
 	Email     string `json:"email" binding:"required,email"`
@@ -29,7 +29,7 @@ type User struct {
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }
-type UpdateUserBody struct {
+type updateUserBody struct {
 	ID        int32 `sql:"primary_key"`
 	Username  string `json:"username" binding:"required_without_all=Email Password Balance"`
 	Email     string `json:"email" binding:"omitempty,email"`

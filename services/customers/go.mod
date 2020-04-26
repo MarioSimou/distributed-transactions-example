@@ -3,6 +3,7 @@ module customers
 go 1.12
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.4.1
 	github.com/gin-gonic/gin v1.6.2
 	github.com/go-jet/jet v2.2.0+incompatible
 	github.com/go-pg/pg v8.0.6+incompatible // indirect
