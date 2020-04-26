@@ -10,13 +10,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func handleError(e error){
-	if e != nil {
-		log.Fatalf("Error: %v\n", e)
-	}
-}
-
-
 func main(){
 	var e error
 	var db *sql.DB
@@ -26,13 +19,13 @@ func main(){
 	}
 
 	if db , e = sql.Open("postgres", env.DBUri); e != nil {
-		handleError(e)
+		i.HandleError(e)
 	}
 	defer db.Close()
 	if e := db.Ping(); e != nil {
-		handleError(e)
+		i.HandleError(e)
 	}
-	var contr = i.Controllers{
+	var contr = i.Controller{
 		Env: env,
 		DB: db,
 	}
@@ -67,6 +60,26 @@ func main(){
 			Method: "DELETE",
 			Path: "/products/:id",
 			HandlerFunc: contr.DeleteProduct,
+		},
+		i.Route{
+			Method: "GET",
+			Path: "/orders",
+			HandlerFunc: contr.GetOrders,
+		},
+		i.Route{
+			Method: "GET",
+			Path: "/orders/:id",
+			HandlerFunc: contr.GetOrder,
+		},
+		i.Route{
+			Method: "POST",
+			Path: "/orders",
+			HandlerFunc: contr.CreateOrder,
+		},
+		i.Route{
+			Method: "DELETE",
+			Path: "/orders/:id",
+			HandlerFunc: contr.DeleteOrder,
 		},
 	}	
 	var router = i.GetRouter(routes)

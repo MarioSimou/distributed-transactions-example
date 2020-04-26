@@ -1,7 +1,7 @@
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT table_name FROM information_schema.tables WHERE table_name='orders') THEN
-      CREATE TYPE order_status AS ENUM ('pending', 'accepted', 'declined');
+      CREATE TYPE order_status AS ENUM ('pending', 'approved', 'declined');
 
       CREATE TABLE orders(
         id int GENERATED ALWAYS AS IDENTITY,
