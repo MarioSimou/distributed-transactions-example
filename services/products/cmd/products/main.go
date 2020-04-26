@@ -82,7 +82,7 @@ func main(){
 			HandlerFunc: contr.DeleteOrder,
 		},
 	}	
-	var router = i.GetRouter(routes)
+	var router = i.GetRouter(routes, env)
 
 	log.Fatalln(router.Run(fmt.Sprintf(":%s", env.Port)))
 }

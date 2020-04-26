@@ -32,6 +32,7 @@ services:
       - 3000:3000
     environment: 
       - PORT=3000
+      - GO_ENV=development
       - DB_URI=postgresql://$USER:$USER@customers_db:5432/customers?sslmode=disable
     volumes: 
       - type: bind
@@ -67,6 +68,7 @@ services:
       - 4000:4000
     environment: 
       - PORT=4000
+      - GIN_MODE=debug
       - DB_URI=postgresql://$USER:$USER@products_db:5432/products?sslmode=disable
     volumes: 
       - type: bind

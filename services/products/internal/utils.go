@@ -20,10 +20,10 @@ type postProductBody struct {
 
 type updateProductBody struct {
 	ID        int32 `json:"id" sql:"primary_key"`
-	Name      string `json:"name" binding:"omitempty,required_without_all=Price Quantity Currency"`
+	Name      string `json:"name" binding:"required_without_all=Price Quantity Currency"`
 	Price     float64 `json:"price" binding:"omitempty,gt=0"`
 	Quantity  *int32 `json:"quantity" binding:"omitempty,gte=0"`
-	Currency  model.Currency `json:"currency" binding="omitempty,oneof=GBP USD EURO"`
+	Currency  model.Currency `json:"currency" binding:"omitempty,oneof=GBP USD EURO"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }

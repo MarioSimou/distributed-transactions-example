@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 	"products/internal/models/products/public/model"
@@ -32,11 +33,11 @@ func (contr *Controller) GetProducts(c *gin.Context){
 	var statement = Products.SELECT(Products.AllColumns).FROM(Products)
 	var dest []model.Products
 	if e := statement.Query(contr.DB, &dest); e != nil {
-		c.JSON(http.StatusBadRequest, response{Status: http.StatusBadRequest, Success: false, Message: e.Error()})
+		c.JSON(http.StatusInternalServerError, response{Status: http.StatusInternalServerError, Success: false, Message: e.Error()})
 		return
 	}
 	if len(dest) == 0 {
-		c.JSON(http.StatusNotFound, response{Status: http.StatusNotFound, Success: false, Message: fmt.Sprintf("Product not found")})	
+		c.JSON(http.StatusNotFound, response{Status: http.StatusNotFound, Success: false, Message: qrm.ErrNoRows.Error()})	
 		return
 	}
 	
@@ -49,14 +50,14 @@ func (contr *Controller) GetProduct(c *gin.Context){
 
 	if e := c.ShouldBindUri(&productUri); e != nil {
 		c.JSON(http.StatusBadRequest, response{Status: http.StatusBadRequest, Success: false, Message: e.Error()})	
+		return
 	}
-
 	var statement = Products.SELECT(Products.AllColumns).FROM(Products).WHERE(Products.ID.EQ(Int(productUri.Id)))
 	if e := statement.Query(contr.DB, &dest); e != nil {
 		if e == qrm.ErrNoRows {
 			c.JSON(http.StatusNotFound, response{Status: http.StatusNotFound, Success: false, Message: e.Error()})	
 		} else {
-			c.JSON(http.StatusBadRequest, response{Status: http.StatusBadRequest, Success: false, Message: e.Error()})
+			c.JSON(http.StatusInternalServerError, response{Status: http.StatusInternalServerError, Success: false, Message: e.Error()})
 		}
 		return
 	}
@@ -112,7 +113,7 @@ func (contr *Controller) UpdateProduct(c *gin.Context){
 		return	
 	}
 	if e := Products.SELECT(Products.AllColumns).FROM(Products).WHERE(Products.ID.EQ(Int(productUri.Id))).Query(contr.DB, &existingProduct); e != nil {
-		c.JSON(http.StatusNotFound, response{Status: http.StatusNotFound, Success: false, Message: e.Error()})	
+		c.JSON(http.StatusNotFound, response{Status: http.StatusNotFound, Success: false, Message: qrm.ErrNoRows.Error()})	
 		return
 	}
 	body.UpdatedAt = time.Now()
@@ -131,19 +132,21 @@ func (contr *Controller) UpdateProduct(c *gin.Context){
 
 func (contr *Controller) DeleteProduct(c *gin.Context){
 	var productUri productUri
-	var product model.Products
+	var result sql.Result
+	var e error
 
 	if e := c.ShouldBindUri(&productUri); e != nil {
 		c.JSON(http.StatusBadRequest, response{Status: http.StatusBadRequest, Success: false, Message: e.Error()})	
+		return
 	}
 
-	var statement = Products.DELETE().WHERE(Products.ID.EQ(Int(productUri.Id))).RETURNING(Products.ID)
-	if e := statement.Query(contr.DB, &product); e != nil {
-		if e == qrm.ErrNoRows {
-			c.JSON(http.StatusNotFound, response{Status: http.StatusNotFound, Success: false, Message: e.Error()})	
-		} else {
-			c.JSON(http.StatusBadRequest, response{Status: http.StatusBadRequest, Success: false, Message: e.Error()})
-		}
+	var statement = Products.DELETE().WHERE(Products.ID.EQ(Int(productUri.Id)))
+	if result, e = statement.Exec(contr.DB); e != nil {
+		c.JSON(http.StatusInternalServerError, response{Status: http.StatusInternalServerError, Success: false, Message: e.Error()})
+		return
+	}
+	if n, _ := result.RowsAffected(); n == 0 {
+		c.JSON(http.StatusNotFound, response{Status: http.StatusNotFound, Success: false, Message: qrm.ErrNoRows.Error()})	
 		return
 	}
 
@@ -153,12 +156,13 @@ func (contr *Controller) DeleteProduct(c *gin.Context){
 func (contr *Controller) GetOrders(c *gin.Context){
 	var statement = Orders.SELECT(Orders.AllColumns).FROM(Orders)
 	var dest []model.Orders
+
 	if e := statement.Query(contr.DB, &dest); e != nil {
 		c.JSON(http.StatusInternalServerError, response{Status: http.StatusInternalServerError,Success: false, Message: e.Error()})
 		return
 	}
 	if len(dest) == 0 {
-		c.JSON(http.StatusNotFound, response{Status: http.StatusNotFound,Success: false, Message: fmt.Sprintf("Order not found")})
+		c.JSON(http.StatusNotFound, response{Status: http.StatusNotFound,Success: false, Message: qrm.ErrNoRows.Error()})
 		return
 	}
 
@@ -242,22 +246,21 @@ func (contr *Controller) CreateOrder(c *gin.Context){
 
 func (contr *Controller) DeleteOrder(c *gin.Context){
 	var orderUri orderUri
-	var dest model.Orders
-	
+	var result sql.Result
+	var e error
+
 	if e := c.ShouldBindUri(&orderUri); e != nil {
 		c.JSON(http.StatusBadRequest, response{Status: http.StatusBadRequest,Success: false, Message: e.Error()})
 		return
 	}
-
-	var statement = Orders.DELETE().WHERE(Orders.ID.EQ(Int(orderUri.Id))).RETURNING(Orders.ID)
-	if e := statement.Query(contr.DB, &dest); e != nil {
-		if e == qrm.ErrNoRows {
-			c.JSON(http.StatusNotFound, response{Status: http.StatusNotFound,Success: false, Message: e.Error()})
-		} else {
-			c.JSON(http.StatusInternalServerError, response{Status: http.StatusInternalServerError,Success: false, Message: e.Error()})
-		}
+	if result, e = Orders.DELETE().WHERE(Orders.ID.EQ(Int(orderUri.Id))).Exec(contr.DB); e != nil {
+		c.JSON(http.StatusInternalServerError, response{Status: http.StatusInternalServerError,Success: false, Message: e.Error()})
+		return
+	}
+	if n, _ := result.RowsAffected(); n == 0 {
+		c.JSON(http.StatusNotFound, response{Status: http.StatusNotFound,Success: false, Message: qrm.ErrNoRows.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, response{Status: http.StatusOK, Success: true, Data: dest})
+	c.JSON(http.StatusNoContent, response{Status: http.StatusNoContent, Success: true})
 }
