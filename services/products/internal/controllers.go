@@ -22,7 +22,7 @@ type EnvVariables struct {
 
 type Controller struct {
 	Env EnvVariables
-	DB qrm.DB
+	DB *sql.DB
 }
 
 func (contr *Controller) Ping(c *gin.Context){
@@ -191,24 +191,33 @@ func (contr *Controller) GetOrder(c *gin.Context){
 func (contr *Controller) CreateOrder(c *gin.Context){
 	var body postOrderBody
 	var dest model.Orders
+	var trans *sql.Tx
+	var e error
 	if e := c.ShouldBindJSON(&body); e != nil {
 		c.JSON(http.StatusBadRequest, response{Status: http.StatusBadRequest,Success: false, Message: e.Error()})
 		return
 	}	
-
+	if trans, e = contr.DB.Begin(); e != nil {
+		c.JSON(http.StatusInternalServerError, response{Status: http.StatusInternalServerError,Success: false, Message: e.Error()})
+		return
+	}
 	// checks if the product is available
 	var matchedProduct model.Products
-	var matchedProductStatement = Products.SELECT(Products.ID, Products.Quantity, Products.Price).FROM(Products).WHERE(Products.ID.EQ(Int(body.ProductID)).AND(Products.Quantity.GT_EQ(Int(body.Quantity))))
+	var matchedProductStatement = Products.SELECT(
+		Products.ID, 
+		Products.Quantity, 
+		Products.Price,
+		).FROM(Products).WHERE(Products.ID.EQ(Int(body.ProductID)).AND(Products.Quantity.GT_EQ(Int(body.Quantity))))
 
-	if e := matchedProductStatement.Query(contr.DB, &matchedProduct); e != nil {
+	if e := matchedProductStatement.Query(trans, &matchedProduct); e != nil {
 		if e == qrm.ErrNoRows {
-			c.JSON(http.StatusInternalServerError, response{Status: http.StatusInternalServerError,Success: false, Message: fmt.Sprintf("Not enough resources for product with id %d", body.ProductID)})
+			c.JSON(http.StatusNotFound, response{Status: http.StatusNotFound,Success: false, Message: fmt.Sprintf("Not enough resources for product with id %d", body.ProductID)})
 		} else {
 			c.JSON(http.StatusInternalServerError, response{Status: http.StatusInternalServerError,Success: false, Message: e.Error()})
 		}
+		trans.Rollback()
 		return	
 	}
-
 	// creates the order
 	var total = matchedProduct.Price * float64(body.Quantity)
 	var statement = Orders.INSERT(
@@ -228,19 +237,22 @@ func (contr *Controller) CreateOrder(c *gin.Context){
 		time.Now(),
 		time.Now(),
 	).RETURNING(Orders.AllColumns)
-	if e := statement.Query(contr.DB, &dest); e != nil {
+	if e := statement.Query(trans, &dest); e != nil {
 		c.JSON(http.StatusInternalServerError, response{Status: http.StatusInternalServerError,Success: false, Message: e.Error()})
+		trans.Rollback()
 		return
 	}
 
 	// decreases the quantity from products table
 	var newQuantity = int64(*matchedProduct.Quantity) - int64(body.Quantity)
 	var updateProductQuantityStatement = Products.UPDATE(Products.Quantity).SET(Int(newQuantity)).WHERE(Products.ID.EQ(Int(body.ProductID)))
-	if _, e := updateProductQuantityStatement.Exec(contr.DB); e != nil { 	
+	if _, e := updateProductQuantityStatement.Exec(trans); e != nil { 	
 		c.JSON(http.StatusInternalServerError, response{Status: http.StatusInternalServerError,Success: false, Message: e.Error()})
+		trans.Rollback()
 		return
 	}
 
+	trans.Commit()
 	c.JSON(http.StatusOK, response{Status: http.StatusOK,Success: true, Data: dest})
 }
 

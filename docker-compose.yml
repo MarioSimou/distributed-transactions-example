@@ -92,3 +92,23 @@ services:
         source: products_db_data
         target: /var/lib/postgresql/data
     restart: on-failure
+  ui:
+    container_name: ui
+    image: msimou/ui:distributed-transactions
+    build: 
+      context: ./services/ui
+      dockerfile: deployments/dockerfile
+    stdin_open: true
+    tty: true
+    ports: 
+      - 8080:3000
+    environment: 
+      - NODE_ENV=development
+    restart: on-failure
+    volumes: 
+      - type: bind
+        source: $PWD/services/ui
+        target: /app
+    depends_on: 
+      - products
+      - customers

@@ -2,6 +2,7 @@ package internal
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -35,7 +36,7 @@ func toResponse(body io.Reader) response{
 
 type ControllersSuite struct {
 	suite.Suite
-	DB qrm.DB
+	DB *sql.DB
 	DBMock sqlmock.Sqlmock
 }
 
@@ -667,6 +668,115 @@ func (cs *ControllersSuite) TestDeleteOrder(){
 			var res = toResponse(result.Body)
 			assert.Equal(res, row.expectedRes)
 		}			
+		cs.DBMock.ExpectationsWereMet()
+	}
+}
+
+func (cs *ControllersSuite) TestCreateOrder(){
+	var table = []struct{
+		body []byte
+		setExpectations func(sqlmock.Sqlmock)
+		expectedRes response
+	}{
+		{
+			body: []byte(`{}`),
+			setExpectations: func(dbMock sqlmock.Sqlmock){},
+			expectedRes: response{
+				Status: 400,
+				Success: false,
+				Message:  "Key: 'postOrderBody.UID' Error:Field validation for 'UID' failed on the 'required' tag\nKey: 'postOrderBody.Quantity' Error:Field validation for 'Quantity' failed on the 'required' tag\nKey: 'postOrderBody.UserID' Error:Field validation for 'UserID' failed on the 'required' tag",
+			},
+		},
+		{
+			body: []byte(`{
+				"uid": "uid",
+				"productId": 1,
+				"quantity": 2,
+				"userId": 1
+			}`),
+			setExpectations: func(dbMock sqlmock.Sqlmock){
+				var e = fmt.Errorf("No transaction")
+				dbMock.ExpectBegin().WillReturnError(e)
+			},
+			expectedRes: response{
+				Status: 500,
+				Success: false,
+				Message:  "No transaction",
+			},
+		},
+		{
+			body: []byte(`{
+				"uid": "uid",
+				"productId": 1,
+				"quantity": 2,
+				"userId": 1
+			}`),
+			setExpectations: func(dbMock sqlmock.Sqlmock){
+				dbMock.ExpectBegin()
+				dbMock.ExpectQuery("SELECT (.+) FROM public.products WHERE (.+)").WithArgs(1,2).WillReturnError(qrm.ErrNoRows)
+				dbMock.ExpectRollback()
+			},
+			expectedRes: response{
+				Status: 404,
+				Success: false,
+				Message:  "Not enough resources for product with id 1",
+			},
+		},
+		{
+			body: []byte(`{
+				"uid": "uid",
+				"productId": 1,
+				"quantity": 2,
+				"userId": 1
+			}`),
+			setExpectations: func(dbMock sqlmock.Sqlmock){
+				dbMock.ExpectBegin()
+				dbMock.ExpectQuery("SELECT (.+) FROM public.products WHERE (.+)").WithArgs(1,2).WillReturnError(fmt.Errorf("Internal Error"))
+				dbMock.ExpectRollback()
+			},
+			expectedRes: response{
+				Status: 500,
+				Success: false,
+				Message:  "Internal Error",
+			},
+		},
+		// {
+		// 	body: []byte(`{
+		// 		"uid": "uid",
+		// 		"productId": 1,
+		// 		"quantity": 2,
+		// 		"userId": 1
+		// 	}`),
+		// 	setExpectations: func(dbMock sqlmock.Sqlmock){
+		// 		var rows = sqlmock.NewRows([]string{}).AddRow()
+		// 		dbMock.ExpectBegin()
+		// 		dbMock.ExpectQuery("SELECT (.+) FROM public.products WHERE (.+)").WithArgs(1,2).WillReturnRows(rows)
+		// 		dbMock.ExpectRollback()
+		// 	},
+		// 	expectedRes: response{
+		// 		Status: 404,
+		// 		Success: false,
+		// 		Message:  "Not enough resources for product with id 1",
+		// 	},
+		// },
+	}
+
+
+	var assert = assert.New(cs.T())
+	for _, row := range table {
+		var w = httptest.NewRecorder()
+		var c, _ = gin.CreateTestContext(w)
+		var req = httptest.NewRequest("POST", "/api/v1/orders", bytes.NewReader(row.body))
+		c.Request = req
+		var contr = Controller{Env: env, DB: cs.DB}
+
+		row.setExpectations(cs.DBMock)
+		contr.CreateOrder(c)
+
+		var result = w.Result()
+		var res = toResponse(result.Body)
+
+		assert.Equal(res, row.expectedRes)
 		cs.DBMock.ExpectationsWereMet()
 	}
 }
