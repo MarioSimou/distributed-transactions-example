@@ -1,0 +1,56 @@
+import React from 'react'
+import {
+  AppBar,
+  Toolbar,
+  Typography
+} from '@material-ui/core'
+import makeStyles from '@material-ui/styles/makeStyles'
+import {Link} from 'react-router-dom'
+
+const Login = () => {
+  const classes = useStyles()
+
+  return (
+    <AppBar position="sticky" className={classes.root}>
+      <Toolbar className={classes.toolbar} variant="dense">
+        <Link to="/" className={classes.link}>
+          <Typography variant="h6">Home</Typography>
+        </Link>
+        <Link to="/signin" className={classes.link}>
+          <Typography variant="h6">Sign In</Typography>
+        </Link>
+        <Link to="/signup" className={classes.link}>
+          <Typography variant="h6">Sign Up</Typography>
+        </Link>
+        <Link to="/logout" className={classes.link}>
+          <Typography variant="h6">Logout</Typography>
+        </Link>
+      </Toolbar>
+    </AppBar>
+  )
+}
+
+const useStyles = makeStyles(theme => ({
+  root: {
+    width: '100vw',
+    minWidth: '100vw',
+  },
+  toolbar: {
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  link: {
+    fontWeight: 400,
+    color: theme.palette.primary.contrastText,
+    marginLeft: theme.spacing(2),
+    borderBottom: `1px solid transparent`,
+    textDecoration: 'none',
+    '&:hover': {      
+      borderBottom: `1px solid ${theme.palette.primary.contrastText}`,
+    }
+  },
+}))
+
+export default Login
