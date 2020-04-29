@@ -3,7 +3,16 @@ package internal
 import (
 	"errors"
 	"reflect"
+
+	"github.com/gin-gonic/gin"
 )
+
+func HandleCORS(c *gin.Context){
+	c.Header("Access-Control-Allow-Origin", "*")
+	c.Header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,PATCH,OPTIONS")
+	c.Header("Access-Control-Allow-Headers", "Content-Type: application/json")
+	c.Next()
+}
 
 func copy(src interface{}, tgt interface{}) error {
 	var tv = reflect.ValueOf(tgt) // reflect.value

@@ -10,6 +10,39 @@ import makeStyles from '@material-ui/styles/makeStyles'
 import AccountCircle from '@material-ui/icons/AccountCircle';
 import LockIcon from '@material-ui/icons/Lock';
 import PersonIcon from '@material-ui/icons/Person';
+import httpClient from '../utils/httpClient.js'
+import axios from 'axios'
+import history from '../utils/history.js'
+
+const onSubmitForm = formValues => async e => {
+  e.preventDefault()
+  console.warn("DO SOME VALIDATION")
+
+  try {
+    const url = new URL('/api/v1/users', process.env.REACT_APP_CUSTOMERS_API).toString()
+    const {data} = await httpClient({
+      method: 'POST',
+      url: url,
+      data: JSON.stringify({
+        username: formValues.username.value,
+        email: formValues.email.value,
+        password: formValues.password.value,
+        confirmPassword: formValues.confirmPassword.value,
+      })
+    })
+
+    if(!data.success) {
+      throw new Error(data.message)
+    }
+
+    // store user data
+    // console.log("USER:", data.data)
+    history.push('/')
+
+  } catch(e){
+    window.alert( e.response && e.response.data && e.response.data.message || e.message)
+  }
+}
 
 const CustomAdornment = ({position = "start", Icon}) => {
   return (
@@ -52,17 +85,11 @@ const SignUp = () => {
   const onFocusPassword = handleOnFocusField('password')
   const onFocusConfirmPassword = handleOnFocusField('confirmPassword')
 
-  const onSubmitForm = e => {
-    e.preventDefault()
-    console.log("SUBMITTING FORM")
-  }
-
-
   return (
     <Typography component="div" className={classes.root}>
     <Paper elevation={3} variant="outlined" className={classes.paper}>
-      <Typography variant="h3" align="center" className={classes.title}>Sign In</Typography>
-      <form className={classes.form} noValidate={true} autoComplete="off" onSubmit={onSubmitForm}>
+      <Typography variant="h3" align="center" className={classes.title}>Sign Up</Typography>
+      <form className={classes.form} noValidate={true} autoComplete="off" onSubmit={onSubmitForm(formValues)}>
       <TextField id="username" 
                   label="Username" 
                   placeholder="Your Username" 
@@ -74,7 +101,8 @@ const SignUp = () => {
                   InputProps={{startAdornment: <CustomAdornment Icon={PersonIcon}/>}} 
                   fullWidth
                   required/>
-        <TextField id="email" 
+        <TextField id="email"
+                   type="email"
                    label="Email" 
                    placeholder="Your email" 
                    variant="filled" 
@@ -86,6 +114,7 @@ const SignUp = () => {
                    fullWidth
                    required/>
         <TextField id="password" 
+                   type="password"
                    label="Password" 
                    placeholder="Your Password" 
                    variant="filled" 
@@ -97,6 +126,7 @@ const SignUp = () => {
                    fullWidth
                    required/>
         <TextField id="confirmPassword" 
+                   type="password"
                    label="Password" 
                    placeholder="Your Password" 
                    variant="filled" 

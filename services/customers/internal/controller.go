@@ -64,6 +64,7 @@ func (contr *Controller) GetUsers(c *gin.Context){
 }
 
 func (contr *Controller) CreateUser(c *gin.Context){
+	fmt.Printf("Start CREATEING USER\n")
 	var user postUserBody
 	var dest model.Users
 	if e := c.ShouldBindJSON(&user); e != nil {

@@ -8,6 +8,7 @@ import (
 
 	c "customers/internal"
 
+	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 )
 
@@ -30,7 +31,9 @@ func main(){
 		EnvVariables: envVariables,
 		DB: db,
 	}
-
+	var globMiddlewares = []gin.HandlerFunc{
+		c.HandleCORS,
+	}
 	var routes = []c.Route{
 		c.Route{
 			HttpMethod: "GET",
@@ -49,21 +52,20 @@ func main(){
 		},
 		c.Route{
 			HttpMethod: "POST",
-			Path: "users",
+			Path: "/users",
 			HandlerFunc: controller.CreateUser,
 		},
 		c.Route{
 			HttpMethod: "DELETE",
-			Path: "users/:id",
+			Path: "/users/:id",
 			HandlerFunc: controller.DeleteUser,
 		},
 		c.Route{
 			HttpMethod: "PUT",
-			Path: "users/:id",
+			Path: "/users/:id",
 			HandlerFunc: controller.UpdateUser,
 		},
 	}
-	var router = server.Setup(routes)
-
+	var router = server.Setup(routes, globMiddlewares)
 	router.Run(fmt.Sprintf(":%s", envVariables.Port))
 }

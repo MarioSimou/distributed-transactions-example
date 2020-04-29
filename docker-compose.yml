@@ -5,6 +5,18 @@ volumes:
   products_db_data:
   rabbitmq_data:
 
+networks: 
+  frontend:
+    ipam:
+      driver: default
+      config: 
+        - subnet: "172.16.240.0/24"
+  backend:
+    ipam: 
+      driver: default
+      config: 
+        - subnet: "172.16.241.0/24"
+  
 services:
   # queue:
   #   container_name: queue
@@ -34,6 +46,11 @@ services:
       - PORT=3000
       - GO_ENV=development
       - DB_URI=postgresql://$USER:$USER@customers_db:5432/customers?sslmode=disable
+    networks: 
+      backend:
+        ipv4_address: "172.16.241.10"
+    extra_hosts: 
+      - localhost.ecommerce.com:172.16.241.12
     volumes: 
       - type: bind
         source: $PWD/services/customers
@@ -51,6 +68,8 @@ services:
       - POSTGRES_PASSWORD=$USER
       - POSTGRES_USER=$USER
       - POSTGRES_DB=customers
+    networks: 
+      - backend
     volumes:
       - type: volume
         source: customers_db_data
@@ -70,6 +89,11 @@ services:
       - PORT=4000
       - GIN_MODE=debug
       - DB_URI=postgresql://$USER:$USER@products_db:5432/products?sslmode=disable
+    networks: 
+      backend:
+        ipv4_address: "172.16.241.11" 
+    extra_hosts: 
+      - localhost.ecommerce.com:172.16.241.12
     volumes: 
       - type: bind
         source: $PWD/services/products
@@ -87,6 +111,8 @@ services:
       - POSTGRES_PASSWORD=$USER
       - POSTGRES_USER=$USER
       - POSTGRES_DB=products
+    networks: 
+      - backend
     volumes:
       - type: volume
         source: products_db_data
@@ -104,6 +130,13 @@ services:
       - 8080:3000
     environment: 
       - NODE_ENV=development
+      - REACT_APP_CUSTOMERS_API=http://172.16.241.10:3000
+      - REACT_APP_PRODUCTS_API=http://172.16.241.11:4000
+    networks: 
+      backend:
+        ipv4_address: "172.16.241.12"
+      frontend:
+        ipv4_address: "172.16.240.10"
     restart: on-failure
     volumes: 
       - type: bind
