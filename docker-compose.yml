@@ -46,11 +46,14 @@ services:
       - PORT=3000
       - GO_ENV=development
       - DB_URI=postgresql://$USER:$USER@customers_db:5432/customers?sslmode=disable
+      - UI_DOMAIN=ecommerce.com
+      - ALLOW_ORIGIN_DOMAIN=http://ecommerce.com:8080
     networks: 
       backend:
         ipv4_address: "172.16.241.10"
     extra_hosts: 
-      - localhost.ecommerce.com:172.16.241.12
+      - "ecommerce.com:172.16.241.12"
+      - "products.ecommerce.com:172.16.241.11"
     volumes: 
       - type: bind
         source: $PWD/services/customers
@@ -89,11 +92,14 @@ services:
       - PORT=4000
       - GIN_MODE=debug
       - DB_URI=postgresql://$USER:$USER@products_db:5432/products?sslmode=disable
+      - UI_DOMAIN=ecommerce.com
+      - ALLOW_ORIGIN_DOMAIN=http://ecommerce.com:8080
     networks: 
       backend:
         ipv4_address: "172.16.241.11" 
     extra_hosts: 
-      - localhost.ecommerce.com:172.16.241.12
+      - "ecommerce.com:172.16.241.12"
+      - "products.ecommerce.com:172.16.241.10"
     volumes: 
       - type: bind
         source: $PWD/services/products
@@ -130,8 +136,11 @@ services:
       - 8080:3000
     environment: 
       - NODE_ENV=development
-      - REACT_APP_CUSTOMERS_API=http://172.16.241.10:3000
-      - REACT_APP_PRODUCTS_API=http://172.16.241.11:4000
+      - REACT_APP_CUSTOMERS_API=http://customers.ecommerce.com:3000
+      - REACT_APP_PRODUCTS_API=http://products.ecommerce.com:4000
+    extra_hosts: 
+      - "customers.ecommerce.com:172.16.241.10"
+      - "products.ecommerce.com:172.16.241.11"
     networks: 
       backend:
         ipv4_address: "172.16.241.12"

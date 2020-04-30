@@ -11,7 +11,6 @@ import AccountCircle from '@material-ui/icons/AccountCircle';
 import LockIcon from '@material-ui/icons/Lock';
 import PersonIcon from '@material-ui/icons/Person';
 import httpClient from '../utils/httpClient.js'
-import axios from 'axios'
 import history from '../utils/history.js'
 
 const onSubmitForm = formValues => async e => {
@@ -40,7 +39,7 @@ const onSubmitForm = formValues => async e => {
     history.push('/')
 
   } catch(e){
-    window.alert( e.response && e.response.data && e.response.data.message || e.message)
+    window.alert( (e.response && e.response.data && e.response.data.message) || (e.message))
   }
 }
 

@@ -10,7 +10,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.10.0 // indirect
 	github.com/golang/protobuf v1.4.0 // indirect
 	github.com/google/gofuzz v1.1.0 // indirect
-	github.com/google/uuid v1.1.1 // indirect
+	github.com/google/uuid v1.1.1
 	github.com/hashicorp/go-multierror v1.1.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/lib/pq v1.4.0

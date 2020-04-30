@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -64,12 +63,12 @@ func (cs *ControllerSuite) TestControllerCreateUser(){
 			expectedRes: Response{
 				Status: 400,
 				Success: false,
-				Message: "Key: 'User.Username' Error:Field validation for 'Username' failed on the 'required' tag\nKey: 'User.Email' Error:Field validation for 'Email' failed on the 'required' tag\nKey: 'User.Password' Error:Field validation for 'Password' failed on the 'required' tag",
+				Message: "Key: 'postUserBody.Username' Error:Field validation for 'Username' failed on the 'required' tag\nKey: 'postUserBody.Email' Error:Field validation for 'Email' failed on the 'required' tag\nKey: 'postUserBody.Password' Error:Field validation for 'Password' failed on the 'required' tag",
 			},
 		},
 		{
 			setAssertions: func(dbMock sqlmock.Sqlmock){
-				var e = errors.New("DB error")
+				var e = fmt.Errorf("DB error")
 				var query = "\nINSERT INTO public.users (.+)"
 				
 				dbMock.ExpectQuery(query).WillReturnError(e)
@@ -385,7 +384,7 @@ func (cs *ControllerSuite) TestUpdateUser(){
 			expectedRes: Response{
 				Status: 400,
 				Success: false,
-				Message: "Key: 'UpdateUserBody.Username' Error:Field validation for 'Username' failed on the 'required_without_all' tag",
+				Message: "Key: 'updateUserBody.Username' Error:Field validation for 'Username' failed on the 'required_without_all' tag",
 			},
 			body: []byte(`{}`),
 			setAssertions: func(db sqlmock.Sqlmock){},
@@ -484,6 +483,87 @@ func (cs *ControllerSuite) TestUpdateUser(){
 		if e := cs.DBMock.ExpectationsWereMet(); e != nil {
 			log.Fatalln(e)
 		}
+	}
+}
+
+func (cs *ControllerSuite ) TestSignInUser(){
+	var table = []struct{
+		setAssertions func(sqlmock.Sqlmock)
+		body []byte
+		expectedRes Response
+		cookie bool
+	}{
+		{
+			setAssertions: func(sqlmock.Sqlmock){},
+			body: []byte(`{}`),
+			expectedRes: Response{
+				Status: 400,
+				Success: false,
+				Message: "Key: 'signInBody.Email' Error:Field validation for 'Email' failed on the 'required' tag\nKey: 'signInBody.Password' Error:Field validation for 'Password' failed on the 'required' tag",
+			},
+			cookie: false,
+		},
+		{
+			setAssertions: func(dbMock sqlmock.Sqlmock){
+				var e = fmt.Errorf("Internal Error")
+				dbMock.ExpectQuery("SELECT (.+) FROM public.users WHERE \\(users.email = \\$1\\) AND \\(users.password = \\$2\\)").
+				WithArgs("test@gmail.com", "12345678").
+				WillReturnError(e)
+			},
+			body: []byte(`{
+				"email": "test@gmail.com",
+				"password": "12345678"
+			}`),
+			expectedRes: Response{
+				Status: 500,
+				Success: false,
+				Message: "Internal Error",
+			},
+			cookie: false,
+		},
+		{
+			setAssertions: func(dbMock sqlmock.Sqlmock){
+				var rows = sqlmock.NewRows([]string{"email"}).AddRow("test@gmail.com")
+				dbMock.ExpectQuery("SELECT (.+) FROM public.users WHERE \\(users.email = \\$1\\) AND \\(users.password = \\$2\\)").
+				WithArgs("test@gmail.com", "12345678").
+				WillReturnRows(rows)
+			},
+			body: []byte(`{
+				"email": "test@gmail.com",
+				"password": "12345678"
+			}`),
+			expectedRes: Response{
+				Status: 200,
+				Success: true,	
+				Data: map[string]interface {}{"Balance":interface {}(nil), "CreatedAt":interface {}(nil), "Email":"", "ID":0.0, "Password":"", "UpdatedAt":interface {}(nil), "Username":""},
+			},
+			cookie: true,
+		},
+	}
+
+	var t = cs.T()
+	var assert = assert.New(t)
+	for _, row := range table {
+		var w = httptest.NewRecorder()
+		var req = httptest.NewRequest("POST", "/users/signin", bytes.NewReader(row.body))
+		var c, _ = gin.CreateTestContext(w)
+		c.Request = req
+		var contr = Controller{EnvVariables: env, DB: cs.DB}
+
+		row.setAssertions(cs.DBMock)
+
+		contr.SignInUser(c)
+
+		if row.cookie {
+			var cookieHeader = w.HeaderMap["Set-Cookie"]
+			assert.True(len(cookieHeader) > 0, row.cookie)
+		}
+
+		var result = w.Result()
+		var res, _ = toResponse(result.Body)
+		assert.EqualValues(res, row.expectedRes)
+
+		cs.DBMock.ExpectationsWereMet()
 	}
 }
 

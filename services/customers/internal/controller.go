@@ -9,6 +9,8 @@ import (
 	"customers/internal/models/customers/public/model"
 	. "customers/internal/models/customers/public/table"
 
+	"github.com/google/uuid"
+
 	. "github.com/go-jet/jet/postgres"
 
 	"github.com/gin-gonic/gin"
@@ -63,8 +65,26 @@ func (contr *Controller) GetUsers(c *gin.Context){
 	c.JSON(http.StatusOK, Response{Status: http.StatusOK, Success: true, Data: dest})
 }
 
+func (contr *Controller) SignInUser(c *gin.Context){
+	var body signInBody
+	var dest model.Users
+
+	if e := c.ShouldBindJSON(&body); e != nil {
+		c.JSON(http.StatusBadRequest, Response{Status: http.StatusBadRequest, Success: false, Message: e.Error()})
+		return
+	}
+
+	var statement = Users.SELECT(Users.AllColumns).FROM(Users).WHERE(Users.Email.EQ(String(body.Email)).AND(Users.Password.EQ(String(body.Password))))
+	if e := statement.Query(contr.DB, &dest); e != nil {
+		c.JSON(http.StatusInternalServerError, Response{Status: http.StatusInternalServerError, Success: false, Message: e.Error()})
+		return
+	}
+	var uid = uuid.New()
+	c.SetCookie("sid", uid.String(), int(3600), "/", "ecommerce.com", false, false)
+	c.JSON(http.StatusOK, Response{Status: http.StatusOK, Success: true, Data: dest})
+}
+
 func (contr *Controller) CreateUser(c *gin.Context){
-	fmt.Printf("Start CREATEING USER\n")
 	var user postUserBody
 	var dest model.Users
 	if e := c.ShouldBindJSON(&user); e != nil {

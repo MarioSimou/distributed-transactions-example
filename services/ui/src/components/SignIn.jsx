@@ -9,6 +9,32 @@ import {
 import makeStyles from '@material-ui/styles/makeStyles'
 import AccountCircle from '@material-ui/icons/AccountCircle';
 import LockIcon from '@material-ui/icons/Lock';
+import httpClient from '../utils/httpClient.js'
+import history from '../utils/history'
+import { useUserProfile } from '../utils/hooks'
+
+const onSubmitForm = (formValues, setUserProfile) => async e => {
+  e.preventDefault()
+
+  try {
+    const {data, headers, status, message} = await httpClient({
+      method: 'POST',
+      url: new URL("/api/v1/users/signin", process.env.REACT_APP_CUSTOMERS_API),
+      data: JSON.stringify({
+        email: formValues.email.value,
+        password: formValues.password.value,
+      })
+    })
+    if (status !== 200){
+      throw new Error(message)
+    }
+
+    setUserProfile(data.data)
+    history.push('/')
+  }catch(e){
+    window.alert(e.response && e.response.data && e.response.data.message || e.message )
+  }
+}
 
 const CustomAdornment = ({position = "start", Icon}) => {
   return (
@@ -38,18 +64,15 @@ const Login = () => {
   const onChangePassword = handleOnChangeField('password') 
   const onFocusEmail = handleOnFocusField('email')
   const onFocusPassword = handleOnFocusField('password')
-  const onSubmitForm = e => {
-    e.preventDefault()
-    console.log("SUBMITTING FORM")
-  }
-
+  const {setUserProfile} = useUserProfile()
 
   return (
     <Typography component="div" className={classes.root}>
       <Paper elevation={3} variant="outlined" className={classes.paper}>
         <Typography variant="h3" align="center" className={classes.title}>Sign In</Typography>
-        <form className={classes.form} noValidate={true} autoComplete="off" onSubmit={onSubmitForm}>
+        <form className={classes.form} noValidate={true} autoComplete="off" onSubmit={onSubmitForm(formValues, setUserProfile)}>
           <TextField id="email" 
+                    type="email"
                     label="Email" 
                     placeholder="Your email" 
                     variant="filled" 
@@ -61,6 +84,7 @@ const Login = () => {
                     fullWidth
                     required/>
           <TextField id="password" 
+                    type="password"
                     label="Password" 
                     placeholder="Your Password" 
                     variant="filled" 

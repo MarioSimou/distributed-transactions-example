@@ -6,9 +6,12 @@ import {
 } from '@material-ui/core'
 import makeStyles from '@material-ui/styles/makeStyles'
 import {Link} from 'react-router-dom'
+import {useUserProfile} from '../utils/hooks'
 
 const Login = () => {
   const classes = useStyles()
+  const {userProfile} = useUserProfile()
+  const isLoggedIn = Boolean(userProfile.email)
 
   return (
     <AppBar position="sticky" className={classes.root}>
@@ -16,15 +19,18 @@ const Login = () => {
         <Link to="/" className={classes.link}>
           <Typography variant="h6">Home</Typography>
         </Link>
-        <Link to="/signin" className={classes.link}>
-          <Typography variant="h6">Sign In</Typography>
-        </Link>
+        {!isLoggedIn &&  
+          <Link to="/signin" className={classes.link}>
+            <Typography variant="h6">Sign In</Typography>
+          </Link>}
+        {!isLoggedIn &&
         <Link to="/signup" className={classes.link}>
           <Typography variant="h6">Sign Up</Typography>
-        </Link>
+        </Link>}
+        {isLoggedIn &&
         <Link to="/logout" className={classes.link}>
           <Typography variant="h6">Logout</Typography>
-        </Link>
+        </Link>}
       </Toolbar>
     </AppBar>
   )

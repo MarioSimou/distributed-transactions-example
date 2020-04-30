@@ -15,6 +15,7 @@ import (
 func main(){
 	var envVariables = c.EnvironmentVariables{
 		Port: "3000",
+		UIDomain: os.Getenv("UI_DOMAIN"),
 	}
 
 	var server = c.Server{
@@ -64,6 +65,11 @@ func main(){
 			HttpMethod: "PUT",
 			Path: "/users/:id",
 			HandlerFunc: controller.UpdateUser,
+		},
+		c.Route{
+			HttpMethod: "POST",
+			Path: "/users/signin",
+			HandlerFunc: controller.SignInUser,
 		},
 	}
 	var router = server.Setup(routes, globMiddlewares)

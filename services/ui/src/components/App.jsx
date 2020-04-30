@@ -12,21 +12,26 @@ import CssBaseline from '@material-ui/core/CssBaseline'
 import Navbar from './Navbar.jsx'
 import theme from '../utils/theme.js'
 import history from '../utils/history.js'
+import * as hooks from '../utils/hooks.js'
 
 const App = () => {
+  const [userProfile, setUserProfile] = React.useState(hooks.initUserValues)
 
+  console.log(userProfile)
   return (
     <ThemeProvider theme={theme}>
-      <CssBaseline>
-        <Router history={history}>
-          <Navbar/>
-          <Switch>
-            <Route path="/" exact component={Home} />
-            <Route path="/signin" exact component={SignIn} />
-            <Route path="/signup" exact component={SignUp} />
-          </Switch>
-        </Router>
-      </CssBaseline>
+      <hooks.UserProfileContext.Provider value={{userProfile, setUserProfile}}>
+        <CssBaseline>
+          <Router history={history}>
+            <Navbar/>
+            <Switch>
+              <Route path="/" exact component={Home} />
+              <Route path="/signin" exact component={SignIn} />
+              <Route path="/signup" exact component={SignUp} />
+            </Switch>
+          </Router>
+        </CssBaseline>
+      </hooks.UserProfileContext.Provider>
     </ThemeProvider>
   )
 }

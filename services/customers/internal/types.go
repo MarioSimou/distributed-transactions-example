@@ -8,6 +8,7 @@ import (
 
 type EnvironmentVariables struct {
 	Port string
+	UIDomain string
 }
 
 type Route struct {
@@ -19,6 +20,11 @@ type Route struct {
 type userId struct {
 	Id int64 `uri:"id" binding:"required"`
 } 
+
+type signInBody struct {
+	Email string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required,min=8"`
+}
 
 type postUserBody struct {
 	ID        int32 `sql:"primary_key"`
