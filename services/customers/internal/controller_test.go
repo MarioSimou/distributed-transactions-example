@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http/httptest"
 	"testing"
+	"net/http"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gin-gonic/gin"
@@ -104,7 +105,7 @@ func (cs *ControllerSuite) TestControllerCreateUser(){
 			expectedRes: Response{
 				Status: 200,
 				Success: true,
-				Data: map[string]interface {}{"Balance":interface {}(nil), "CreatedAt":interface {}(nil), "Email":"", "ID":float64(0), "Password":"", "UpdatedAt":interface {}(nil), "Username":"test"},
+				Data: map[string]interface {}{"balance":interface {}(nil), "createdAt":interface {}(nil), "email":"", "id":0.0, "password":"", "updatedAt":interface {}(nil), "username":"test"},
 			},
 		},
 	}
@@ -176,7 +177,7 @@ func (cs *ControllerSuite) TestGetUser(){
 			expectedRes: Response{
 				Status: 200,
 				Success: true,
-				Data: map[string]interface {}{"Balance":interface {}(nil), "CreatedAt":interface {}(nil), "Email":"", "ID":float64(0), "Password":"", "UpdatedAt":interface {}(nil), "Username":"test"},
+				Data: map[string]interface {}{"balance":interface {}(nil), "createdAt":interface {}(nil), "email":"", "id":0.0, "password":"", "updatedAt":interface {}(nil), "username":"test"},
 			},
 			setAssertions: func(dbMock sqlmock.Sqlmock){
 				var columns = []string{"users.username"}
@@ -233,7 +234,7 @@ func (cs *ControllerSuite) TestGetUsers(){
 			expectedRes: Response{
 				Status: 404,
 				Success: false,
-				Message: "User not found",
+				Message: "qrm: no rows in result set",
 			},
 			setAssertions: func(dbMock sqlmock.Sqlmock){
 				var columns = []string{"users.username"}
@@ -245,7 +246,7 @@ func (cs *ControllerSuite) TestGetUsers(){
 			expectedRes: Response{
 				Status: 200,
 				Success: true,
-				Data: []interface {}{map[string]interface {}{"Balance":interface {}(nil), "CreatedAt":interface {}(nil), "Email":"", "ID":float64(0), "Password":"", "UpdatedAt":interface {}(nil), "Username":"test1"}, map[string]interface {}{"Balance":interface {}(nil), "CreatedAt":interface {}(nil), "Email":"", "ID":float64(0), "Password":"", "UpdatedAt":interface {}(nil), "Username":"test2"}},
+				Data: []interface {}{map[string]interface {}{"balance":interface {}(nil), "createdAt":interface {}(nil), "email":"", "id":0.0, "password":"", "updatedAt":interface {}(nil), "username":"test1"}, map[string]interface {}{"balance":interface {}(nil), "createdAt":interface {}(nil), "email":"", "id":0.0, "password":"", "updatedAt":interface {}(nil), "username":"test2"}},
 			},
 			setAssertions: func(dbMock sqlmock.Sqlmock){
 				var columns = []string{"users.username"}
@@ -437,7 +438,7 @@ func (cs *ControllerSuite) TestUpdateUser(){
 			expectedRes: Response{
 				Status: 200,
 				Success: true,
-				Data: map[string]interface {}{"Balance":interface {}(nil), "CreatedAt":interface {}(nil), "Email":"", "ID":float64(0), "Password":"", "UpdatedAt":interface {}(nil), "Username":"test"},
+				Data: map[string]interface {}{"balance":interface {}(nil), "createdAt":interface {}(nil), "email":"", "id":0.0, "password":"", "updatedAt":interface {}(nil), "username":"test"},
 			},
 			body: []byte(`{
 				"username": "test",
@@ -527,6 +528,51 @@ func (cs *ControllerSuite ) TestSignInUser(){
 				dbMock.ExpectQuery("SELECT (.+) FROM public.users WHERE \\(users.email = \\$1\\) AND \\(users.password = \\$2\\)").
 				WithArgs("test@gmail.com", "12345678").
 				WillReturnRows(rows)
+
+				var e = fmt.Errorf("Internal Error")
+				dbMock.ExpectExec("INSERT INTO (.+)").WillReturnError(e)
+			},
+			body: []byte(`{
+				"email": "test@gmail.com",
+				"password": "12345678"
+			}`),
+			expectedRes: Response{
+				Status: 500,
+				Success: false,	
+				Message: "Internal Error",
+			},
+			cookie: false,
+		},
+		{
+			setAssertions: func(dbMock sqlmock.Sqlmock){
+				var rows = sqlmock.NewRows([]string{"email"}).AddRow("test@gmail.com")
+				dbMock.ExpectQuery("SELECT (.+) FROM public.users WHERE \\(users.email = \\$1\\) AND \\(users.password = \\$2\\)").
+				WithArgs("test@gmail.com", "12345678").
+				WillReturnRows(rows)
+
+				var result = sqlmock.NewResult(0,0)
+				dbMock.ExpectExec("INSERT INTO (.+)").	WillReturnResult(result)
+			},
+			body: []byte(`{
+				"email": "test@gmail.com",
+				"password": "12345678"
+			}`),
+			expectedRes: Response{
+				Status: 500,
+				Success: false,	
+				Message: "Session was not created",
+			},
+			cookie: false,
+		},
+		{
+			setAssertions: func(dbMock sqlmock.Sqlmock){
+				var rows = sqlmock.NewRows([]string{"email"}).AddRow("test@gmail.com")
+				dbMock.ExpectQuery("SELECT (.+) FROM public.users WHERE \\(users.email = \\$1\\) AND \\(users.password = \\$2\\)").
+				WithArgs("test@gmail.com", "12345678").
+				WillReturnRows(rows)
+
+				var result = sqlmock.NewResult(1,1)
+				dbMock.ExpectExec("INSERT INTO (.+)").WillReturnResult(result)
 			},
 			body: []byte(`{
 				"email": "test@gmail.com",
@@ -534,8 +580,8 @@ func (cs *ControllerSuite ) TestSignInUser(){
 			}`),
 			expectedRes: Response{
 				Status: 200,
-				Success: true,	
-				Data: map[string]interface {}{"Balance":interface {}(nil), "CreatedAt":interface {}(nil), "Email":"", "ID":0.0, "Password":"", "UpdatedAt":interface {}(nil), "Username":""},
+				Success: true,
+				Data:map[string]interface {}{"balance":interface {}(nil), "createdAt":interface {}(nil), "email":"", "id":0.0, "password":"", "updatedAt":interface {}(nil), "username":""},
 			},
 			cookie: true,
 		},
@@ -545,7 +591,7 @@ func (cs *ControllerSuite ) TestSignInUser(){
 	var assert = assert.New(t)
 	for _, row := range table {
 		var w = httptest.NewRecorder()
-		var req = httptest.NewRequest("POST", "/users/signin", bytes.NewReader(row.body))
+		var req = httptest.NewRequest("POST", "/signin", bytes.NewReader(row.body))
 		var c, _ = gin.CreateTestContext(w)
 		c.Request = req
 		var contr = Controller{EnvVariables: env, DB: cs.DB}
@@ -564,6 +610,183 @@ func (cs *ControllerSuite ) TestSignInUser(){
 		assert.EqualValues(res, row.expectedRes)
 
 		cs.DBMock.ExpectationsWereMet()
+	}
+}
+
+func (cs *ControllerSuite ) TestSignInUserWithGUID(){
+	var table = []struct{
+		cookieValue string
+		setAssertions func(sqlmock.Sqlmock)
+		expectedRes Response
+		returnsCookie bool
+	}{
+		{
+			cookieValue: "",
+			setAssertions: func(dbMock sqlmock.Sqlmock){},
+			expectedRes: Response{
+				Status: 404,
+				Success: false,
+				Message: "http: named cookie not present",
+			},
+			returnsCookie: false,
+		},
+		{
+			cookieValue: "guid",
+			setAssertions: func(dbMock sqlmock.Sqlmock){
+				dbMock.ExpectQuery("SELECT (.+) FROM public.sessions WHERE sessions.guid = \\$1").WithArgs("guid").WillReturnError(qrm.ErrNoRows)
+
+			},
+			expectedRes: Response{
+				Status: 404,
+				Success: false,
+				Message: qrm.ErrNoRows.Error(),
+			},
+			returnsCookie: false,
+		},
+		{
+			cookieValue: "guid",
+			setAssertions: func(dbMock sqlmock.Sqlmock){
+				var rows = sqlmock.NewRows([]string{"sessions.guid"}).AddRow("guid")
+				dbMock.ExpectQuery("SELECT (.+) FROM public.sessions WHERE sessions.guid = \\$1").WithArgs("guid").WillReturnRows(rows)
+
+				dbMock.ExpectQuery("SELECT (.+) FROM public.users WHERE (.+)").WithArgs(0).WillReturnError(qrm.ErrNoRows)				
+			},
+			expectedRes: Response{
+				Status: 404,
+				Success: false,
+				Message: qrm.ErrNoRows.Error(),
+			},
+			returnsCookie: false,
+		},
+		{
+			cookieValue: "guid",
+			setAssertions: func(dbMock sqlmock.Sqlmock){
+				var rows1 = sqlmock.NewRows([]string{"sessions.guid"}).AddRow("guid")
+				dbMock.ExpectQuery("SELECT (.+) FROM public.sessions WHERE sessions.guid = \\$1").WithArgs("guid").WillReturnRows(rows1)
+
+				var rows2 = sqlmock.NewRows([]string{"users.email"}).AddRow("test@gmail.com")
+				dbMock.ExpectQuery("SELECT (.+) FROM public.users WHERE (.+)").WithArgs(0).WillReturnRows(rows2)	
+
+				var e = fmt.Errorf("Internal Error")
+				dbMock.ExpectExec("UPDATE public.sessions (.+) WHERE sessions.guid = \\$2").WithArgs(sqlmock.AnyArg(), "guid").WillReturnError(e)
+			},
+			expectedRes: Response{
+				Status: 500,
+				Success: false,
+				Message: "Internal Error",
+			},
+			returnsCookie: false,
+		},
+		{
+			cookieValue: "guid",
+			setAssertions: func(dbMock sqlmock.Sqlmock){
+				var rows1 = sqlmock.NewRows([]string{"sessions.guid"}).AddRow("guid")
+				dbMock.ExpectQuery("SELECT (.+) FROM public.sessions WHERE sessions.guid = \\$1").WithArgs("guid").WillReturnRows(rows1)
+
+				var rows2 = sqlmock.NewRows([]string{"users.email"}).AddRow("test@gmail.com")
+				dbMock.ExpectQuery("SELECT (.+) FROM public.users WHERE (.+)").WithArgs(0).WillReturnRows(rows2)	
+
+				var result = sqlmock.NewResult(1,1)
+				dbMock.ExpectExec("UPDATE public.sessions (.+) WHERE sessions.guid = \\$2").WithArgs(sqlmock.AnyArg(), "guid").WillReturnResult(result)
+			},
+			expectedRes: Response{
+				Status: 200,
+				Success: true,
+				Data: map[string]interface {}{"balance":interface {}(nil), "createdAt":interface {}(nil), "email":"test@gmail.com", "id":0.0, "password":"", "updatedAt":interface {}(nil), "username":""},
+			},
+			returnsCookie: true,
+		},
+	}
+
+	var t = cs.T()
+	var assert = assert.New(t)
+	for _, row := range table {
+		var w = httptest.NewRecorder()
+		var c, _ = gin.CreateTestContext(w)
+		var req, _ = http.NewRequest("GET", "/signin", nil)
+
+		if row.cookieValue != ""{
+			var cookie = http.Cookie{
+				Name: "sid",
+				Value: row.cookieValue,
+				Domain: "ecommerce.com",
+				Path: "/",
+				MaxAge: 3600,
+			}
+			req.AddCookie(&cookie)	
+		}
+		var contr = Controller{EnvVariables: env, DB: cs.DB}
+
+		c.Request = req
+		row.setAssertions(cs.DBMock)
+		contr.SignInUserWithCookie(c)
+
+		if row.returnsCookie {
+			var cookieHeader = w.HeaderMap["Set-Cookie"]
+			assert.True(len(cookieHeader) > 0, row.returnsCookie)
+		}
+
+		var result = w.Result()
+		var res, _ = toResponse(result.Body)
+		assert.EqualValues(res, row.expectedRes)
+
+		cs.DBMock.ExpectationsWereMet()
+	}
+}
+
+func (cs *ControllerSuite ) TestLogOut(){
+	var table = []struct{
+		cookieValue string
+		expectedRes Response
+		returnsCookie bool
+	}{
+		{
+			cookieValue: "",
+			returnsCookie: false,
+			expectedRes: Response{
+				Status: 404,
+				Success:false,
+				Message: "http: named cookie not present",
+			},
+		},
+		{
+			cookieValue: "value",
+			returnsCookie: true,
+			expectedRes: Response{},
+		},
+	}
+
+	var t = cs.T()
+	var assert = assert.New(t)
+	for _, row := range table {
+		var w = httptest.NewRecorder()
+		var c, _ = gin.CreateTestContext(w)
+		var req, _ = http.NewRequest("GET", "/signin", nil)
+		var contr = Controller{EnvVariables: env, DB: cs.DB}
+
+		if row.cookieValue != ""{
+			var cookie = http.Cookie{
+				Name: "sid",
+				Value: row.cookieValue,
+				Domain: "ecommerce.com",
+				Path: "/",
+				MaxAge: 3600,
+			}
+			req.AddCookie(&cookie)	
+		}
+
+
+		c.Request = req
+		contr.LogOut(c)
+
+		if row.returnsCookie {
+			var cookieHeader = w.HeaderMap["Set-Cookie"]
+			assert.True(len(cookieHeader) > 0, row.returnsCookie)
+		}
+
+		var result = w.Result()
+		var res, _ = toResponse(result.Body)
+		assert.EqualValues(res, row.expectedRes)
 	}
 }
 

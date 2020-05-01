@@ -37,9 +37,3 @@ else
 fi
 
 exec "$@"
-
-function parse_db_uri {
-  sslmode=$( echo $1 | egrep -o 'sslmode=\w+' | awk -F '=' '{ print $2 }' )
-
-  for match in 
-}

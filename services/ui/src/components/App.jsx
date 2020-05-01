@@ -13,9 +13,27 @@ import Navbar from './Navbar.jsx'
 import theme from '../utils/theme.js'
 import history from '../utils/history.js'
 import * as hooks from '../utils/hooks.js'
+import httpClient from '../utils/httpClient'
+import {CancelToken} from 'axios'
+
+const loadUserProfile = async ({setUserProfile, source}) => {
+  try {
+    const uri = new URL(`/api/v1/signin`, process.env.REACT_APP_CUSTOMERS_API)
+    const {data} = await httpClient.get(uri.toString(), {cancelToken: source.token})
+    setUserProfile(data.data)
+  }catch(e){
+    console.warn('No user profile loaded')
+  }
+}
 
 const App = () => {
   const [userProfile, setUserProfile] = React.useState(hooks.initUserValues)
+
+  React.useEffect(() => {
+    const source = CancelToken.source()
+    loadUserProfile({setUserProfile,source})
+    return () => source.cancel()
+  }, [])
 
   console.log(userProfile)
   return (

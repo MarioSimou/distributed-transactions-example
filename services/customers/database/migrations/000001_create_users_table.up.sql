@@ -4,7 +4,7 @@ DO $$
 BEGIN
   
   IF NOT EXISTS(SELECT table_name FROM information_schema.tables WHERE table_name='users') THEN
-    RAISE NOTICE 'Running migration...';
+    RAISE NOTICE 'Creating users table...';
 
     CREATE TABLE IF NOT EXISTS users (
       id int GENERATED ALWAYS AS IDENTITY,

@@ -17,6 +17,10 @@ type Route struct {
 	HandlerFunc gin.HandlerFunc
 }
 
+type signInWithGUIDUri struct {
+	GUID string `uri:"guid" binding:"required"`
+} 
+
 type userId struct {
 	Id int64 `uri:"id" binding:"required"`
 } 

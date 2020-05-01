@@ -19,7 +19,7 @@ const onSubmitForm = (formValues, setUserProfile) => async e => {
   try {
     const {data, headers, status, message} = await httpClient({
       method: 'POST',
-      url: new URL("/api/v1/users/signin", process.env.REACT_APP_CUSTOMERS_API),
+      url: new URL("/api/v1/signin", process.env.REACT_APP_CUSTOMERS_API),
       data: JSON.stringify({
         email: formValues.email.value,
         password: formValues.password.value,

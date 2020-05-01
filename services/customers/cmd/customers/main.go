@@ -68,8 +68,18 @@ func main(){
 		},
 		c.Route{
 			HttpMethod: "POST",
-			Path: "/users/signin",
+			Path: "/signin",
 			HandlerFunc: controller.SignInUser,
+		},
+		c.Route{
+			HttpMethod: "GET",
+			Path: "/signin",
+			HandlerFunc: controller.SignInUserWithCookie,
+		},
+		c.Route{
+			HttpMethod: "POST",
+			Path:"/logout",
+			HandlerFunc: controller.LogOut,
 		},
 	}
 	var router = server.Setup(routes, globMiddlewares)

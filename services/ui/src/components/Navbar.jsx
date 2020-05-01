@@ -6,11 +6,26 @@ import {
 } from '@material-ui/core'
 import makeStyles from '@material-ui/styles/makeStyles'
 import {Link} from 'react-router-dom'
-import {useUserProfile} from '../utils/hooks'
+import {useUserProfile, initUserValues} from '../utils/hooks'
+import httpClient from '../utils/httpClient'
+import history from '../utils/history'
+
+const onClickLogOut = ({setUserProfile}) => async () => {
+  try {
+    const uri = new URL(`/api/v1/logout`, process.env.REACT_APP_CUSTOMERS_API)
+    const {status} = await httpClient.post(uri.toString())
+    if (status === 204){
+      setUserProfile(initUserValues)
+      history.push('/')
+    }
+  }catch(e){
+    window.alert(e.response && e.response.data && e.response.data.message || e.message)
+  }
+}
 
 const Login = () => {
   const classes = useStyles()
-  const {userProfile} = useUserProfile()
+  const {userProfile, setUserProfile} = useUserProfile()
   const isLoggedIn = Boolean(userProfile.email)
 
   return (
@@ -29,7 +44,7 @@ const Login = () => {
         </Link>}
         {isLoggedIn &&
         <Link to="/logout" className={classes.link}>
-          <Typography variant="h6">Logout</Typography>
+          <Typography variant="h6" onClick={onClickLogOut({setUserProfile})}>Logout</Typography>
         </Link>}
       </Toolbar>
     </AppBar>
