@@ -6,7 +6,9 @@ import (
 	"log"
 	"os"
 	i "products/internal"
+	// "time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 )
@@ -30,8 +32,17 @@ func main(){
 		Env: env,
 		DB: db,
 	}
+	var handleCors = cors.New(cors.Config{
+		AllowOrigins:     []string{os.Getenv("ALLOW_ORIGIN_DOMAIN")},
+		AllowMethods:     []string{"OPTIONS","GET","POST","DELETE","PUT", "PATCH"},
+		AllowHeaders:     []string{"Content-Type: application/json"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		// MaxAge: 12 * time.Hour,
+	})
+
 	var globalMiddlewares = []gin.HandlerFunc{
-		i.HandleCORS,
+		handleCors,
 	}
 
 	var routes = []i.Route{

@@ -135,6 +135,8 @@ func (contr *Controller) UpdateProduct(c *gin.Context){
 }
 
 func (contr *Controller) DeleteProduct(c *gin.Context){
+	fmt.Println("EXECUTED")
+
 	var productUri productUri
 	var result sql.Result
 	var e error
@@ -154,7 +156,7 @@ func (contr *Controller) DeleteProduct(c *gin.Context){
 		return
 	}
 
-	c.JSON(http.StatusNoContent, response{Status: http.StatusNoContent, Success:true})
+	c.JSON(http.StatusOK, response{Status: http.StatusOK, Success:true})
 }
 
 func (contr *Controller) GetOrders(c *gin.Context){

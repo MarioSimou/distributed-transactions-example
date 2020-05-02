@@ -44,7 +44,7 @@ services:
       - 3000:3000
     environment: 
       - PORT=3000
-      - GO_ENV=development
+      - GIN_MODE=debug
       - DB_URI=postgresql://$USER:$USER@customers_db:5432/customers?sslmode=disable
       - UI_DOMAIN=ecommerce.com
       - ALLOW_ORIGIN_DOMAIN=http://ecommerce.com:8080

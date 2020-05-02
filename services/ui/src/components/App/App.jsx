@@ -25,7 +25,6 @@ const App = () => {
     return () => source.cancel()
   }, [])
 
-  console.log(userProfile)
   return (
     <ThemeProvider theme={theme}>
       <hooks.UserProfileContext.Provider value={{userProfile, setUserProfile}}>

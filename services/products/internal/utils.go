@@ -85,8 +85,8 @@ func HandleError(e error){
 
 func HandleCORS(c *gin.Context){
 	c.Header("Access-Control-Allow-Origin", os.Getenv("ALLOW_ORIGIN_DOMAIN"))
-	c.Header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,PATCH,OPTIONS")
-	c.Header("Access-Control-Allow-Headers", "Content-Type: application/json")
+	c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, HEAD")
+	c.Header("Access-Control-Allow-Headers", "Content-Type")
 	c.Header("Access-Control-Allow-Credentials", "true")
 	c.Next()
 }

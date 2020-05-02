@@ -14,6 +14,8 @@ import {
   MenuItem,
   Collapse,
   CardMedia,
+  CardActionArea,
+  Card
 } from '@material-ui/core'
 import CloseIcon from '@material-ui/icons/Close'
 import makeStyles from '@material-ui/styles/makeStyles'
@@ -56,10 +58,13 @@ const AddProductDialog = ({open, onCloseDialog}) => {
   const classes = useStyles()
   const onChangeFieldValue = (key, isNumber = false) => ({target}) => setFormValues({...formValues, [key]: {touched: true, value: isNumber ? +target.value: target.value}}) 
   const formRef = React.useRef()
-  const onSubmitForm = onSubmitFormProduct(formRef, formValues, onCloseDialog)
+  const onSuccessSubmission = () => {
+    onCloseDialog()
+    window.location.reload()
+  }
+  const onSubmitForm = onSubmitFormProduct(formRef, formValues, onSuccessSubmission)
   const appendField = (key, value) => setFormValues({...formValues, [key]:value})
 
-  
   return (
     <Dialog open={open} onClose={onCloseDialog} className={classes.root} disableBackdropClick={true}>
       <Paper elevation={3} className={classes.paper}>
@@ -119,7 +124,11 @@ const AddProductDialog = ({open, onCloseDialog}) => {
             </FormControl>
             <FormControl fullWidth>
               <Collapse in={Boolean(formValues.productImage)}>
-                <CardMedia className={classes.productImage} title="product-image" image={formValues.productImage}/>
+                {formValues.productImage && 
+                  <CardMedia
+                  className={classes.productImage}
+                  image={formValues.productImage}
+                  title="product-image"/>}
               </Collapse>
               <InputBase type="file"
                         id="productImage"

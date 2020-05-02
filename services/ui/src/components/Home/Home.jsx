@@ -18,6 +18,7 @@ const Home = () => {
   const [products, setProducts] = React.useState([])
   const onCloseDialog = () => setShowDialog(false)
   const onClickAddProduct = () => setShowDialog(true)
+  const onDeleteProduct = id => products.filter(product => product.id !== id) 
 
   React.useEffect(() => {
     const source = CancelToken.source()
@@ -25,7 +26,6 @@ const Home = () => {
     return () => source.cancel()
   },[])
 
-  console.log(products)
   return (
     <Paper className={classes.root}>
       <Toolbar variant="dense" className={classes.toolbar}>
@@ -35,9 +35,9 @@ const Home = () => {
       </Toolbar>
       <Typography className={classes.main} component="div">
         <AddProductDialog open={showDialog} onCloseDialog={onCloseDialog} />
-        <Typography component="div">
+        <Typography component="div" className={classes.productsWrapper}>
           {products.length && products.map(product => {
-            return <ProductCard key={product.id} title={product.name} content={product.description} image={product.image}/>
+            return <ProductCard key={product.id} {...product} onDeleteProduct={onDeleteProduct}/>
           })}
         </Typography>
       </Typography>
@@ -63,6 +63,11 @@ const useStyles = makeStyles(theme => ({
     [theme.breakpoints.down('sm')]: {
       padding: theme.spacing(2),
     }
+  },
+  productsWrapper: {
+    display: 'grid',
+    gridGap: theme.spacing(2),
+    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
   }
 }))
 
