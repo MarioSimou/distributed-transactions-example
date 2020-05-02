@@ -10,9 +10,13 @@ type Route struct {
 	HandlerFunc gin.HandlerFunc
 }
 
-func GetRouter(routes []Route, env EnvVariables) *gin.Engine {
+func GetRouter(routes []Route, globalMiddlewares []gin.HandlerFunc, env EnvVariables) *gin.Engine {
 	var router = gin.Default()
 	var v1 = router.Group("/api/v1")
+
+	for _, globalMiddleware := range globalMiddlewares {
+		v1.Use(globalMiddleware)
+	}
 
 	for _, route := range routes {
 		v1.Handle(route.Method, route.Path, route.HandlerFunc)

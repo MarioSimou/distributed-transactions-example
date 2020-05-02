@@ -2,7 +2,6 @@ import React from 'react'
 import {
   Paper,
   TextField,
-  InputAdornment,
   Typography,
   Button,
 } from '@material-ui/core'
@@ -11,14 +10,7 @@ import AccountCircle from '@material-ui/icons/AccountCircle';
 import LockIcon from '@material-ui/icons/Lock';
 import PersonIcon from '@material-ui/icons/Person';
 import onSubmitForm from './utils/onSubmitForm.js'
-
-const CustomAdornment = ({position = "start", Icon}) => {
-  return (
-    <InputAdornment position={position}>
-      <Icon/>
-    </InputAdornment>
-  )
-}
+import Adornment from '../shared/Adornment'
 
 const initFormValues = {
   username: {
@@ -66,7 +58,7 @@ const SignUp = () => {
                   error={formValues.username.touched && formValues.username.value === ''}
                   onChange={onChangeUsername}
                   onFocus={onFocusUsername}
-                  InputProps={{startAdornment: <CustomAdornment Icon={PersonIcon}/>}} 
+                  InputProps={{startAdornment: <Adornment Icon={PersonIcon}/>}} 
                   fullWidth
                   required/>
         <TextField id="email"
@@ -78,7 +70,7 @@ const SignUp = () => {
                    error={formValues.email.touched && formValues.email.value === ''}
                    onChange={onChangeEmail}
                    onFocus={onFocusEmail}
-                   InputProps={{startAdornment: <CustomAdornment Icon={AccountCircle}/>}} 
+                   InputProps={{startAdornment: <Adornment Icon={AccountCircle}/>}} 
                    fullWidth
                    required/>
         <TextField id="password" 
@@ -90,7 +82,7 @@ const SignUp = () => {
                    value={formValues.password.value}
                    onChange={onChangePassword}
                    onFocus={onFocusPassword}
-                   InputProps={{startAdornment: <CustomAdornment Icon={LockIcon}/>}} 
+                   InputProps={{startAdornment: <Adornment Icon={LockIcon}/>}} 
                    fullWidth
                    required/>
         <TextField id="confirmPassword" 
@@ -102,7 +94,7 @@ const SignUp = () => {
                    value={formValues.confirmPassword.value}
                    onChange={onChangeConfirmPassword}
                    onFocus={onFocusConfirmPassword}
-                   InputProps={{startAdornment: <CustomAdornment Icon={LockIcon}/>}} 
+                   InputProps={{startAdornment: <Adornment Icon={LockIcon}/>}} 
                    fullWidth
                    required/>
 

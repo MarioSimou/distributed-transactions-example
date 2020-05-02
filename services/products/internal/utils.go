@@ -3,24 +3,30 @@ package internal
 import (
 	"fmt"
 	"log"
+	"os"
 	"products/internal/models/products/public/model"
 	"reflect"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 type postProductBody struct {
 	ID        int32  `json:"id" sql:"primary_key"` 
 	Name      string `json:"name" binding:"required"`
+	Description string `json:"description" binding:"required"`
 	Price     float64 `json:"price" binding:"required,gt=0"`
 	Quantity  *int32 `json:"quantity" binding:"required,gte=0"`
 	Currency  string `json:"currency" binding:"required,oneof=GBP EURO USD"`
+	Image string `json:"image" binding:"required"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 type updateProductBody struct {
 	ID        int32 `json:"id" sql:"primary_key"`
-	Name      string `json:"name" binding:"required_without_all=Price Quantity Currency"`
+	Name      string `json:"name" binding:"required_without_all=Description Price Quantity Currency"`
+	Description string `json:"description" binding:"omitempty,max=500"`
 	Price     float64 `json:"price" binding:"omitempty,gt=0"`
 	Quantity  *int32 `json:"quantity" binding:"omitempty,gte=0"`
 	Currency  model.Currency `json:"currency" binding:"omitempty,oneof=GBP USD EURO"`
@@ -75,4 +81,12 @@ func HandleError(e error){
 	if e != nil {
 		log.Fatalf("Error: %v\n", e)
 	}
+}
+
+func HandleCORS(c *gin.Context){
+	c.Header("Access-Control-Allow-Origin", os.Getenv("ALLOW_ORIGIN_DOMAIN"))
+	c.Header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,PATCH,OPTIONS")
+	c.Header("Access-Control-Allow-Headers", "Content-Type: application/json")
+	c.Header("Access-Control-Allow-Credentials", "true")
+	c.Next()
 }

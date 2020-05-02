@@ -2,7 +2,6 @@ import React from 'react'
 import {
   Paper,
   TextField,
-  InputAdornment,
   Button,
   Typography,
 } from '@material-ui/core'
@@ -11,14 +10,7 @@ import AccountCircle from '@material-ui/icons/AccountCircle';
 import LockIcon from '@material-ui/icons/Lock';
 import { useUserProfile } from '../../utils/hooks'
 import onSubmitForm from './utils/onSubmitForm.js'
-
-const CustomAdornment = ({position = "start", Icon}) => {
-  return (
-    <InputAdornment position={position}>
-      <Icon/>
-    </InputAdornment>
-  )
-}
+import Adornment from '../shared/Adornment'
 
 const initFormValues = {
   email: {
@@ -56,7 +48,7 @@ const Login = () => {
                     error={formValues.email.touched && formValues.email.value === ''}
                     onChange={onChangeEmail}
                     onFocus={onFocusEmail}
-                    InputProps={{startAdornment: <CustomAdornment Icon={AccountCircle}/>}} 
+                    InputProps={{startAdornment: <Adornment Icon={AccountCircle}/>}} 
                     fullWidth
                     required/>
           <TextField id="password" 
@@ -68,7 +60,7 @@ const Login = () => {
                     value={formValues.password.value}
                     onChange={onChangePassword}
                     onFocus={onFocusPassword}
-                    InputProps={{startAdornment: <CustomAdornment Icon={LockIcon}/>}} 
+                    InputProps={{startAdornment: <Adornment Icon={LockIcon}/>}} 
                     fullWidth
                     required/>
           <Button type="submit" variant="contained" color="primary" fullWidth className={classes.button}>

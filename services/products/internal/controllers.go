@@ -75,16 +75,20 @@ func (contr *Controller) CreateProduct(c *gin.Context){
 
 	var statement = Products.INSERT(
 		Products.Name,
+		Products.Description,
 		Products.Price,
 		Products.Quantity,
 		Products.Currency,
+		Products.Image,
 		Products.CreatedAt,
 		Products.UpdatedAt,
 	).VALUES(
 		body.Name,
+		body.Description,
 		body.Price,
 		body.Quantity,
 		body.Currency,
+		body.Image,
 		time.Now(),
 		time.Now(),
 	).RETURNING(Products.AllColumns)

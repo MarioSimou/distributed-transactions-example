@@ -7,6 +7,7 @@ import (
 	"os"
 	i "products/internal"
 
+	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 )
 
@@ -28,6 +29,9 @@ func main(){
 	var contr = i.Controller{
 		Env: env,
 		DB: db,
+	}
+	var globalMiddlewares = []gin.HandlerFunc{
+		i.HandleCORS,
 	}
 
 	var routes = []i.Route{
@@ -82,7 +86,7 @@ func main(){
 			HandlerFunc: contr.DeleteOrder,
 		},
 	}	
-	var router = i.GetRouter(routes, env)
+	var router = i.GetRouter(routes, globalMiddlewares, env)
 
 	log.Fatalln(router.Run(fmt.Sprintf(":%s", env.Port)))
 }
