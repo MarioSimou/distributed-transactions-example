@@ -129,9 +129,9 @@ func (contr *Controller) SignInUser(c *gin.Context){
 	}
 
 	var sid = uuid.New()
-	var createdAt = time.Now()
-	var expiresAt = createdAt.Add(time.Second * time.Duration(MAX_AGE))
-	var session = model.Sessions{UserID: dest.ID,GUID: sid.String(),CreatedAt: &createdAt, ExpiresAt: expiresAt}
+	var now = time.Now()
+	var expiresAt = now.Add(time.Duration(MAX_AGE) * time.Second)
+	var session = model.Sessions{UserID: dest.ID,GUID: sid.String(),CreatedAt: now, ExpiresAt: expiresAt}
 	var sessionStatement = Sessions.INSERT(Sessions.MutableColumns).MODEL(session)
 
 	if result, e = sessionStatement.Exec(contr.DB); e != nil {

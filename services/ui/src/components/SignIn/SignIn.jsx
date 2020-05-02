@@ -9,32 +9,8 @@ import {
 import makeStyles from '@material-ui/styles/makeStyles'
 import AccountCircle from '@material-ui/icons/AccountCircle';
 import LockIcon from '@material-ui/icons/Lock';
-import httpClient from '../utils/httpClient.js'
-import history from '../utils/history'
-import { useUserProfile } from '../utils/hooks'
-
-const onSubmitForm = (formValues, setUserProfile) => async e => {
-  e.preventDefault()
-
-  try {
-    const {data, headers, status, message} = await httpClient({
-      method: 'POST',
-      url: new URL("/api/v1/signin", process.env.REACT_APP_CUSTOMERS_API),
-      data: JSON.stringify({
-        email: formValues.email.value,
-        password: formValues.password.value,
-      })
-    })
-    if (status !== 200){
-      throw new Error(message)
-    }
-
-    setUserProfile(data.data)
-    history.push('/')
-  }catch(e){
-    window.alert(e.response && e.response.data && e.response.data.message || e.message )
-  }
-}
+import { useUserProfile } from '../../utils/hooks'
+import onSubmitForm from './utils/onSubmitForm.js'
 
 const CustomAdornment = ({position = "start", Icon}) => {
   return (

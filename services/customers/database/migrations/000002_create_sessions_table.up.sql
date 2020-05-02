@@ -20,6 +20,7 @@ BEGIN
     ALTER TABLE sessions ALTER COLUMN user_id SET NOT NULL;
     ALTER TABLE sessions ALTER COLUMN guid SET NOT NULL;
     ALTER TABLE sessions ALTER COLUMN expires_at SET NOT NULL;
+    ALTER TABLE sessions ALTER COLUMN created_at SET NOT NULL;
     ALTER TABLE sessions ALTER COLUMN created_at SET DEFAULT NOW();
 
   ELSE

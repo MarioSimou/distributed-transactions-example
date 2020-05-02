@@ -5,26 +5,16 @@ import {
   Route,
   Switch
 } from 'react-router-dom'
-import Home from './Home.jsx'
-import SignIn from './SignIn.jsx'
-import SignUp from './SignUp.jsx'
+import Home from '../Home/Home.jsx'
+import SignIn from '../SignIn/SignIn.jsx'
+import SignUp from '../SignUp/SignUp.jsx'
 import CssBaseline from '@material-ui/core/CssBaseline'
-import Navbar from './Navbar.jsx'
-import theme from '../utils/theme.js'
-import history from '../utils/history.js'
-import * as hooks from '../utils/hooks.js'
-import httpClient from '../utils/httpClient'
+import Navbar from '../shared/Navbar.jsx'
+import theme from '../../utils/theme.js'
+import history from '../../utils/history.js'
+import * as hooks from '../../utils/hooks.js'
 import {CancelToken} from 'axios'
-
-const loadUserProfile = async ({setUserProfile, source}) => {
-  try {
-    const uri = new URL(`/api/v1/signin`, process.env.REACT_APP_CUSTOMERS_API)
-    const {data} = await httpClient.get(uri.toString(), {cancelToken: source.token})
-    setUserProfile(data.data)
-  }catch(e){
-    console.warn('No user profile loaded')
-  }
-}
+import loadUserProfile from './utils/loadUserProfile.js'
 
 const App = () => {
   const [userProfile, setUserProfile] = React.useState(hooks.initUserValues)
