@@ -135,8 +135,6 @@ func (contr *Controller) UpdateProduct(c *gin.Context){
 }
 
 func (contr *Controller) DeleteProduct(c *gin.Context){
-	fmt.Println("EXECUTED")
-
 	var productUri productUri
 	var result sql.Result
 	var e error

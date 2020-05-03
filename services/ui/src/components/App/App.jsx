@@ -32,9 +32,9 @@ const App = () => {
           <Router history={history}>
             <Navbar/>
             <Switch>
-              <Route path="/" exact component={Home} />
-              <Route path="/signin" exact component={SignIn} />
-              <Route path="/signup" exact component={SignUp} />
+              <Route path="/" exact component={Home}/>
+              <Route path="/signin" exact component={SignIn}/>
+              <Route path="/signup" exact component={SignUp}/>
             </Switch>
           </Router>
         </CssBaseline>

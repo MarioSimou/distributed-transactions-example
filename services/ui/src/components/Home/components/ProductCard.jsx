@@ -9,12 +9,15 @@ import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 import classnames from 'classnames'
 import onClickDeleteProduct from './utils/onClickDeleteProduct'
+import {useUserProfile} from '../../../utils/hooks'
 
-const ProductCard = ({id, name:title, description, image, onDeleteProduct}) => {
+const ProductCard = ({id, name:title, description, image, onDeleteProduct, onAddToCart}) => {
   const classes = useStyles();
   const [mouseEnter, setMouseEnter] = React.useState(false)
+  const {userProfile} = useUserProfile()
   const onMouseEnter = () => setMouseEnter(true)
   const onMouseLeave = () => setMouseEnter(false)
+  const isLoggedIn = userProfile && userProfile.email
   
   return (
     <Card className={classes.root} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
@@ -35,12 +38,15 @@ const ProductCard = ({id, name:title, description, image, onDeleteProduct}) => {
         <Button size="small" color="primary">
           View
         </Button>
-        <Button size="small" color="primary" onClick={onClickDeleteProduct(id,onDeleteProduct)}>
-          Delete
-        </Button>
-        <Button size="small" color="primary">
-          Add to Cart
-        </Button>
+        {isLoggedIn &&
+          <React.Fragment> 
+            <Button size="small" color="primary" onClick={onClickDeleteProduct(id,onDeleteProduct)}>
+              Delete
+            </Button>
+            <Button size="small" color="primary" onClick={onAddToCart}>
+              Add to Cart
+            </Button>
+          </React.Fragment>}
       </CardActions>
     </Card>
   );

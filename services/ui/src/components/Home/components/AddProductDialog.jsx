@@ -14,8 +14,6 @@ import {
   MenuItem,
   Collapse,
   CardMedia,
-  CardActionArea,
-  Card
 } from '@material-ui/core'
 import CloseIcon from '@material-ui/icons/Close'
 import makeStyles from '@material-ui/styles/makeStyles'
@@ -39,11 +37,11 @@ const initProductsValues = {
   },
   price: {
     touched: false,
-    value: 0.0
+    value: ''
   },
   quantity: {
     touched: false,
-    value: 0,
+    value: '',
   },
   currency: {
     touched: false,
@@ -94,8 +92,8 @@ const AddProductDialog = ({open, onCloseDialog}) => {
                         fullWidth/>
             </FormControl>
             <FormControl fullWidth>
-              <TextField type="number" 
-                        value={formValues.price.value} 
+              <TextField type="text" 
+                        value={formValues.price.value.toString()} 
                         onChange={onChangeFieldValue('price', true)} 
                         placeholder="Your Price" 
                         label="Price" 
@@ -115,8 +113,8 @@ const AddProductDialog = ({open, onCloseDialog}) => {
               </TextField>
             </FormControl> 
             <FormControl fullWidth>
-              <TextField type="number" 
-                        value={formValues.quantity.value} 
+              <TextField type="text" 
+                        value={formValues.quantity.value.toString()} 
                         onChange={onChangeFieldValue('quantity', true)} 
                         placeholder="Your Quantity" 
                         label="Quantity" 
