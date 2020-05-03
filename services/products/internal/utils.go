@@ -6,6 +6,7 @@ import (
 	"os"
 	"products/internal/models/products/public/model"
 	"reflect"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -89,4 +90,12 @@ func HandleCORS(c *gin.Context){
 	c.Header("Access-Control-Allow-Headers", "Content-Type")
 	c.Header("Access-Control-Allow-Credentials", "true")
 	c.Next()
+}
+
+
+func HandleSubscribersResponses(subRes chan SubResponse, wg sync.WaitGroup){
+	defer wg.Done()
+	for res := range subRes {
+		log.Printf("Response: %v\n", res)
+	}
 }

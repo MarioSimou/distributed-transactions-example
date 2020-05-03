@@ -18,11 +18,13 @@ import (
 type EnvVariables struct {
 	DBUri string
 	Port string
+	QueueUri string
 }
 
 type Controller struct {
 	Env EnvVariables
 	DB *sql.DB
+	Publisher Publishing
 }
 
 func (contr *Controller) Ping(c *gin.Context){
@@ -257,6 +259,11 @@ func (contr *Controller) CreateOrder(c *gin.Context){
 	}
 
 	trans.Commit()
+
+	if e := contr.Publisher.Pub("products_created_order_success", dest); e != nil {
+		c.JSON(http.StatusInternalServerError, response{Status: http.StatusInternalServerError,Success: false, Message: e.Error()})
+		return
+	}
 	c.JSON(http.StatusOK, response{Status: http.StatusOK,Success: true, Data: dest})
 }
 

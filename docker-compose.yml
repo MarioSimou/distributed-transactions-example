@@ -18,20 +18,22 @@ networks:
         - subnet: "172.16.241.0/24"
   
 services:
-  # queue:
-  #   container_name: queue
-  #   image: rabbitmq:3.8-rc-management
-  #   ports:
-  #     - 5672:5672
-  #     - 15672:15672
-  #   environment: 
-  #     - RABBITMQ_DEFAULT_USER=$USER
-  #     - RABBITMQ_DEFAULT_PASS=$USER
-  #   volumes: 
-  #     - type: volume
-  #       source: rabbitmq_data
-  #       target: /var/lib/rabbitmq
-  #   restart: on-failure
+  queue:
+    container_name: queue
+    image: rabbitmq:3.8-rc-management
+    ports:
+      - 5672:5672
+      - 15672:15672
+    environment: 
+      - RABBITMQ_DEFAULT_USER=$USER
+      - RABBITMQ_DEFAULT_PASS=$USER
+    networks: 
+      - backend
+    volumes: 
+      - type: volume
+        source: rabbitmq_data
+        target: /var/lib/rabbitmq
+    restart: on-failure
   customers:
     container_name: customers
     image: msimou/customers:distributed-transactions
@@ -60,7 +62,7 @@ services:
         target: /go/src/app
     depends_on: 
       - customers_db
-      # - queue
+      - queue
     restart: on-failure
   customers_db:
     container_name: customers_db
@@ -91,6 +93,7 @@ services:
     environment: 
       - PORT=4000
       - GIN_MODE=debug
+      - QUEUE_URI=amqp://msimou:msimou@queue/
       - DB_URI=postgresql://$USER:$USER@products_db:5432/products?sslmode=disable
       - UI_DOMAIN=ecommerce.com
       - ALLOW_ORIGIN_DOMAIN=http://ecommerce.com:8080
@@ -106,7 +109,7 @@ services:
         target: /go/src/app
     depends_on: 
       - products_db
-      # - queue
+      - queue
     restart: on-failure
   products_db:
     container_name: products_db
