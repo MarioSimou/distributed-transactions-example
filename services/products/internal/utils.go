@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"products/internal/models/products/public/model"
+	"products/internal/rabbitmq"
 	"reflect"
 	"sync"
 	"time"
@@ -31,6 +32,7 @@ type updateProductBody struct {
 	Price     float64 `json:"price" binding:"omitempty,gt=0"`
 	Quantity  *int32 `json:"quantity" binding:"omitempty,gte=0"`
 	Currency  model.Currency `json:"currency" binding:"omitempty,oneof=GBP USD EURO"`
+	Image string `json:"image"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }
@@ -92,8 +94,7 @@ func HandleCORS(c *gin.Context){
 	c.Next()
 }
 
-
-func HandleSubscribersResponses(subRes chan SubResponse, wg sync.WaitGroup){
+func HandleSubscribersResponses(subRes chan rabbitmq.SubResponse, wg sync.WaitGroup){
 	defer wg.Done()
 	for res := range subRes {
 		log.Printf("Response: %v\n", res)

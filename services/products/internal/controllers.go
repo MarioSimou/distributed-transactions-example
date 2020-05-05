@@ -8,6 +8,7 @@ import (
 	"time"
 
 	. "products/internal/models/products/public/table"
+	"products/internal/rabbitmq"
 
 	. "github.com/go-jet/jet/postgres"
 
@@ -24,7 +25,7 @@ type EnvVariables struct {
 type Controller struct {
 	Env EnvVariables
 	DB *sql.DB
-	Publisher Publishing
+	Publisher rabbitmq.PublisherInterface
 }
 
 func (contr *Controller) Ping(c *gin.Context){

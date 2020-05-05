@@ -24,16 +24,20 @@ DB_HOST=$(get_host)
 DB_PORT=$(get_port)
 DB_NAME=$(get_database_name)
 
-if [[ -n "DB_URI" ]]; then
+if [[ -n $DB_URI ]]; then
   figlet "Running migrations"
   # sets the database schema
   migrate -database $DB_URI -path database/migrations up
 
-  # generates models that can be used within the go app
-  jet -source=PostgreSQL -host=$DB_HOST -user=$DB_USERNAME -password=$DB_PASSWORD -port=$DB_PORT -dbname=$DB_NAME -path=./internal/models
+  if [[ ! -d "internal/models" ]]; then
+    figlet "Generating models..."
+
+    # generates models that can be used within the go app
+    jet -source=PostgreSQL -host=$DB_HOST -user=$DB_USERNAME -password=$DB_PASSWORD -port=$DB_PORT -dbname=$DB_NAME -path=./internal/models
+  fi
+
 else 
-  figlet "Warning: ignoring migration"
-  exit 1
+  echo "ignoring migration..."  
 fi
 
 exec "$@"

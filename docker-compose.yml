@@ -47,6 +47,7 @@ services:
     environment: 
       - PORT=3000
       - GIN_MODE=debug
+      - QUEUE_URI=amqp://msimou:msimou@queue/
       - DB_URI=postgresql://$USER:$USER@customers_db:5432/customers?sslmode=disable
       - UI_DOMAIN=ecommerce.com
       - ALLOW_ORIGIN_DOMAIN=http://ecommerce.com:8080

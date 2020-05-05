@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	i "products/internal"
+	"products/internal/rabbitmq"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -16,8 +17,9 @@ func main(){
 	var e error
 	var db *sql.DB
 	var wg sync.WaitGroup
-	var publisher i.Publishing
-	var subResChan chan i.SubResponse
+	var publisher rabbitmq.PublisherInterface
+	var queueConn = &rabbitmq.ConnectionStruct{}
+	var subResChan chan rabbitmq.SubResponse
 	var env = i.EnvVariables{
 		DBUri: os.Getenv("DB_URI"),
 		Port: os.Getenv("PORT"),
@@ -34,22 +36,30 @@ func main(){
 		i.HandleError(e)
 	}
 	defer db.Close()
+	
 	if e := db.Ping(); e != nil {
 		i.HandleError(e)
 	}
-	if publisher, e = i.NewPublisher(env.QueueUri,queuesNames); e != nil {
+	
+	if e := queueConn.Start(env.QueueUri); e != nil {
 		log.Fatalln(e)
 	}
-	var subscribers = []i.Subscriber{
-		i.Subscriber{
+	defer queueConn.Close()
+
+	if publisher, e = rabbitmq.NewPublisher(queuesNames, queueConn); e != nil {
+		log.Fatalln(e)
+	}
+	
+	var subscribers = []rabbitmq.Subscriber{
+		rabbitmq.Subscriber{
 			QueueName: "products_created_order_success",
-			HandlerFunc: func(d i.Message) error {
-				fmt.Println("HELLO WORLD")
+			HandlerFunc: func(d rabbitmq.Message) error {
+				fmt.Printf("Message: %v\n", d)
 				return nil
 			},
 		},
 	}
-	if subResChan, e = i.NewSubscription(env.QueueUri, subscribers); e != nil {
+	if subResChan, e = rabbitmq.NewSubscription(subscribers, queueConn); e != nil {
 		log.Fatalln(e)
 	}
 	

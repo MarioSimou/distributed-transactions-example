@@ -88,7 +88,7 @@ func (cs *ControllersSuite) TestGetProducts(){
 			expectedRes: response{
 				Status: 200,
 				Success: true,
-				Data: []interface {}{map[string]interface {}{"CreatedAt":"0001-01-01T00:00:00Z", "Currency":interface {}(nil), "ID":float64(0), "Name":"product", "Price": float64(0), "Quantity":interface {}(nil), "UpdatedAt":"0001-01-01T00:00:00Z"}},
+				Data: []interface {}{map[string]interface {}{"createdAt":"0001-01-01T00:00:00Z", "currency":interface {}(nil), "description":"", "id":0.0, "image":"", "name":"product", "price":0.0, "quantity":interface {}(nil), "updatedAt":"0001-01-01T00:00:00Z"}},
 			},
 		},
 	}
@@ -163,7 +163,7 @@ func (cs *ControllersSuite) TestGetProduct(){
 			expectedRes: response{
 				Status: 200,
 				Success: true,
-				Data: map[string]interface {}{"CreatedAt":"0001-01-01T00:00:00Z", "Currency":interface {}(nil), "ID":float64(0), "Name":"product1", "Price":float64(0), "Quantity":interface {}(nil), "UpdatedAt":"0001-01-01T00:00:00Z"},
+				Data: map[string]interface {}{"createdAt":"0001-01-01T00:00:00Z", "currency":interface {}(nil), "description":"", "id":0.0, "image":"", "name":"product1", "price":0.0, "quantity":interface {}(nil), "updatedAt":"0001-01-01T00:00:00Z"},
 			},
 		},
 	}
@@ -199,7 +199,7 @@ func (cs *ControllersSuite) TestCreateProduct(){
 			expectedRes: response{
 				Status: 400,
 				Success: false,
-				Message:  "Key: 'postProductBody.Name' Error:Field validation for 'Name' failed on the 'required' tag\nKey: 'postProductBody.Price' Error:Field validation for 'Price' failed on the 'required' tag\nKey: 'postProductBody.Quantity' Error:Field validation for 'Quantity' failed on the 'required' tag\nKey: 'postProductBody.Currency' Error:Field validation for 'Currency' failed on the 'required' tag",
+				Message:  "Key: 'postProductBody.Name' Error:Field validation for 'Name' failed on the 'required' tag\nKey: 'postProductBody.Description' Error:Field validation for 'Description' failed on the 'required' tag\nKey: 'postProductBody.Price' Error:Field validation for 'Price' failed on the 'required' tag\nKey: 'postProductBody.Quantity' Error:Field validation for 'Quantity' failed on the 'required' tag\nKey: 'postProductBody.Currency' Error:Field validation for 'Currency' failed on the 'required' tag\nKey: 'postProductBody.Image' Error:Field validation for 'Image' failed on the 'required' tag",
 			},
 		},
 		{
@@ -207,11 +207,13 @@ func (cs *ControllersSuite) TestCreateProduct(){
 				"name": "product",
 				"price": 10.0,
 				"quantity": 1,
+				"description": "description",
+				"image": "image",
 				"currency": "GBP"
 			}`),
 			setExpectations: func(dbMock sqlmock.Sqlmock){
 				dbMock.ExpectQuery("^INSERT INTO public.products(.+) VALUES (.+)").
-				WithArgs("product", 10.0,1,"GBP", sqlmock.AnyArg(), sqlmock.AnyArg()).
+				WithArgs("product","description", 10.0,1,"GBP","image", sqlmock.AnyArg(), sqlmock.AnyArg()).
 				WillReturnError(fmt.Errorf("Internal Error"))
 			},
 			expectedRes: response{
@@ -225,18 +227,20 @@ func (cs *ControllersSuite) TestCreateProduct(){
 				"name": "product",
 				"price": 10.0,
 				"quantity": 1,
+				"description": "description",
+				"image": "image",
 				"currency": "GBP"
 			}`),
 			setExpectations: func(dbMock sqlmock.Sqlmock){
 				var rows = sqlmock.NewRows([]string{"name"}).AddRow("name")
 				dbMock.ExpectQuery("^INSERT INTO public.products(.+) VALUES (.+)").
-				WithArgs("product", 10.0,1,"GBP", sqlmock.AnyArg(), sqlmock.AnyArg()).
+				WithArgs("product","description", 10.0,1,"GBP","image", sqlmock.AnyArg(), sqlmock.AnyArg()).
 				WillReturnRows(rows)
 			},
 			expectedRes: response{
 				Status: 200,
 				Success: true,
-				Data: map[string]interface {}{"CreatedAt":"0001-01-01T00:00:00Z", "Currency":interface {}(nil), "ID":float64(0), "Name":"", "Price":float64(0), "Quantity":interface {}(nil), "UpdatedAt":"0001-01-01T00:00:00Z"},
+				Data: map[string]interface {}{"createdAt":"0001-01-01T00:00:00Z", "currency":interface {}(nil), "description":"", "id":0.0, "image":"", "name":"", "price":0.0, "quantity":interface {}(nil), "updatedAt":"0001-01-01T00:00:00Z"},
 			},
 		},
 	}
@@ -315,7 +319,7 @@ func (cs *ControllersSuite) TestUpdateProduct(){
 				WithArgs(1).
 				WillReturnRows(sqlmock.NewRows([]string{"products.currency"}).AddRow("USD"))
 
-				dbMock.ExpectQuery("UPDATE public.products SET (.+) WHERE products.id = \\$7").
+				dbMock.ExpectQuery("UPDATE public.products SET (.+) WHERE products.id = \\$9").
 				WillReturnError(fmt.Errorf("Internal Error"))
 			},
 			expectedRes: response{
@@ -334,13 +338,13 @@ func (cs *ControllersSuite) TestUpdateProduct(){
 				WithArgs(1).
 				WillReturnRows(sqlmock.NewRows([]string{"products.currency"}).AddRow("USD"))
 
-				dbMock.ExpectQuery("UPDATE public.products SET (.+) WHERE products.id = \\$7").
+				dbMock.ExpectQuery("UPDATE public.products SET (.+) WHERE products.id = \\$9").
 				WillReturnRows(sqlmock.NewRows([]string{"products.name"}).AddRow("product"))
 			},
 			expectedRes: response{
 				Status: 200,
 				Success: true,
-				Data: map[string]interface {}{"CreatedAt":"0001-01-01T00:00:00Z", "Currency":interface {}(nil), "ID":float64(0), "Name":"product", "Price":float64(0), "Quantity":interface {}(nil), "UpdatedAt":"0001-01-01T00:00:00Z"},
+				Data: map[string]interface {}{"createdAt":"0001-01-01T00:00:00Z", "currency":interface {}(nil), "description":"", "id":0.0, "image":"", "name":"product", "price":0.0, "quantity":interface {}(nil), "updatedAt":"0001-01-01T00:00:00Z"},
 			},
 		},
 	}
@@ -417,7 +421,7 @@ func (cs *ControllersSuite) TestDeleteProduct(){
 		},
 		{
 			id: "1",
-			code: 204,
+			code: 200,
 			setExpectations: func(dbMock sqlmock.Sqlmock){
 				var result = sqlmock.NewResult(1,1)
 				dbMock.ExpectExec("^DELETE FROM public.products WHERE products.id = \\$1;$").
@@ -425,7 +429,8 @@ func (cs *ControllersSuite) TestDeleteProduct(){
 				WillReturnResult(result)				
 			},
 			expectedRes: response{
-
+				Status: 200,
+				Success: true,
 			},
 		},
 	}
@@ -488,7 +493,7 @@ func (cs *ControllersSuite) TestGetOrders(){
 			expectedRes: response{
 				Status: 200,
 				Success: true,
-				Data: []interface {}{map[string]interface {}{"CreatedAt":"0001-01-01T00:00:00Z", "ID":float64(0), "ProductID":float64(0), "Quantity":float64(0), "Status":interface {}(nil), "Total":float64(0), "UID":"uid", "UpdatedAt":"0001-01-01T00:00:00Z", "UserID":float64(0)}},
+				Data: []interface {}{map[string]interface {}{"createdAt":"0001-01-01T00:00:00Z", "id":0.0, "productId":0.0, "quantity":0.0, "status":interface {}(nil), "total":0.0, "uid":"uid", "updatedAt":"0001-01-01T00:00:00Z", "userId":0.0}},
 			},
 		},
 	}
@@ -563,7 +568,7 @@ func (cs *ControllersSuite) TestGetOrder(){
 			expectedRes: response{
 				Status: 200,
 				Success: true,
-				Data: map[string]interface {}{"CreatedAt":"0001-01-01T00:00:00Z", "ID":0.0, "ProductID":0.0, "Quantity": 0.0, "Status":interface {}(nil), "Total":0.0, "UID":"uid", "UpdatedAt":"0001-01-01T00:00:00Z", "UserID":0.0},
+				Data: map[string]interface {}{"createdAt":"0001-01-01T00:00:00Z", "id":0.0, "productId":0.0, "quantity":0.0, "status":interface {}(nil), "total":0.0, "uid":"uid", "updatedAt":"0001-01-01T00:00:00Z", "userId":0.0},
 			},
 		},
 	}
@@ -740,25 +745,25 @@ func (cs *ControllersSuite) TestCreateOrder(){
 				Message:  "Internal Error",
 			},
 		},
-		// {
-		// 	body: []byte(`{
-		// 		"uid": "uid",
-		// 		"productId": 1,
-		// 		"quantity": 2,
-		// 		"userId": 1
-		// 	}`),
-		// 	setExpectations: func(dbMock sqlmock.Sqlmock){
-		// 		var rows = sqlmock.NewRows([]string{}).AddRow()
-		// 		dbMock.ExpectBegin()
-		// 		dbMock.ExpectQuery("SELECT (.+) FROM public.products WHERE (.+)").WithArgs(1,2).WillReturnRows(rows)
-		// 		dbMock.ExpectRollback()
-		// 	},
-		// 	expectedRes: response{
-		// 		Status: 404,
-		// 		Success: false,
-		// 		Message:  "Not enough resources for product with id 1",
-		// 	},
-		// },
+		{
+			body: []byte(`{
+				"uid": "uid",
+				"productId": 1,
+				"quantity": 2,
+				"userId": 1
+			}`),
+			setExpectations: func(dbMock sqlmock.Sqlmock){
+				var rows = sqlmock.NewRows([]string{}).AddRow()
+				dbMock.ExpectBegin()
+				dbMock.ExpectQuery("SELECT (.+) FROM public.products WHERE (.+)").WithArgs(1,2).WillReturnRows(rows)
+				dbMock.ExpectRollback()
+			},
+			expectedRes: response{
+				Status: 404,
+				Success: false,
+				Message:  "Not enough resources for product with id 1",
+			},
+		},
 	}
 
 
