@@ -2,8 +2,8 @@ package tests
 
 import (
 	"context"
-	m "products/internal/mocks"
-	r "products/internal/rabbitmq"
+	m "customers/internal/mocks"
+	r "customers/internal/rabbitmq"
 	"fmt"
 	"testing"
 

@@ -1,9 +1,12 @@
 package internal
 
 import (
+	r "customers/internal/rabbitmq"
 	"errors"
+	"fmt"
 	"os"
 	"reflect"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 )
@@ -35,4 +38,12 @@ func copy(src interface{}, tgt interface{}) error {
 		}
 	}
 	return nil
+}
+
+func HandleSubscribersResponses(subRes chan r.SubscriptionResponse, wg *sync.WaitGroup){
+	defer wg.Done()
+
+	for res := range subRes {
+		fmt.Printf("Handling Customer Response: %v\n", res)
+	}
 }

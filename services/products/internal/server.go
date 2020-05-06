@@ -33,7 +33,7 @@ func getRouter(routes []Route, globalMiddlewares []gin.HandlerFunc, env EnvVaria
 	return router
 }
 
-func LaunchServer(routes []Route, globalMiddlewares []gin.HandlerFunc, env EnvVariables, wg sync.WaitGroup){
+func LaunchServer(routes []Route, globalMiddlewares []gin.HandlerFunc, env EnvVariables, wg *sync.WaitGroup){
 	defer wg.Done()
 
 	var router = getRouter(routes, globalMiddlewares, env)

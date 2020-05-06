@@ -8,6 +8,7 @@ import (
 
 	"customers/internal/models/customers/public/model"
 	. "customers/internal/models/customers/public/table"
+	r "customers/internal/rabbitmq"
 
 	. "github.com/go-jet/jet/postgres"
 
@@ -24,6 +25,7 @@ const (
 type Controller struct {
 	EnvVariables EnvironmentVariables
 	DB *sql.DB
+	Publisher r.PublisherInterface
 }
 
 func (contr *Controller) Ping(c *gin.Context){

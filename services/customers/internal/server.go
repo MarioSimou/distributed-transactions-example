@@ -1,6 +1,9 @@
 package internal
 
 import (
+	"fmt"
+	"sync"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -9,7 +12,7 @@ type Server struct {
 	EnvVariables EnvironmentVariables
 }
 
-func (s *Server) Setup(routes []Route, globMiddlewares []gin.HandlerFunc) *gin.Engine {
+func getRouter(routes []Route, globMiddlewares []gin.HandlerFunc) *gin.Engine {
 	var router = gin.Default()
 	var v1 = router.Group("/api/v1")
 
@@ -22,4 +25,12 @@ func (s *Server) Setup(routes []Route, globMiddlewares []gin.HandlerFunc) *gin.E
 	}
 
 	return router
+}
+
+func LaunchServer(routes []Route, globMiddlewares []gin.HandlerFunc, env EnvironmentVariables, wg *sync.WaitGroup){
+	defer wg.Done()
+
+	var router = getRouter(routes, globMiddlewares)
+
+	router.Run(fmt.Sprintf(":%s", env.Port))
 }

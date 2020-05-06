@@ -9,6 +9,8 @@ import (
 type EnvironmentVariables struct {
 	Port string
 	UIDomain string
+	QueueUri string
+	QueuesNames []string
 }
 
 type Route struct {

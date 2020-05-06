@@ -14,7 +14,7 @@ type PublisherInterface interface {
 	GetChannels() []ChannelInterface
 	GetChannel(string) ChannelInterface
 	GetConnection() ConnectionInterface
-	Pub(queueName string, body interface{}) error
+	Pub(queueName string, body interface{}, requestID string) error
 }
 
 type Publisher struct {
@@ -39,7 +39,7 @@ func (pub *Publisher) GetConnection() ConnectionInterface {
 	return pub.Conn	
 }
 
-func (pub *Publisher) Pub(queueName string, body interface{}) error {
+func (pub *Publisher) Pub(queueName string, body interface{}, requestID string) error {
 	var channel ChannelInterface
 	var e error
 	var bf []byte
@@ -53,6 +53,7 @@ func (pub *Publisher) Pub(queueName string, body interface{}) error {
 	var message = amqp.Publishing{
 		ContentType: "application/json",
 		Body: bf,
+		CorrelationId: requestID,
 	}
 	if e = channel.Publish(queueName, "", false, false, message); e != nil {
 		return e

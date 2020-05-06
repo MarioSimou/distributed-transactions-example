@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 	"products/internal/models/products/public/model"
-	"products/internal/rabbitmq"
+	r "products/internal/rabbitmq"
 	"reflect"
 	"sync"
 	"time"
@@ -94,9 +94,9 @@ func HandleCORS(c *gin.Context){
 	c.Next()
 }
 
-func HandleSubscribersResponses(subRes chan rabbitmq.SubResponse, wg sync.WaitGroup){
+func HandleSubscribersResponses(subRes chan r.SubscriptionResponse, wg *sync.WaitGroup){
 	defer wg.Done()
 	for res := range subRes {
-		log.Printf("Response: %v\n", res)
+		log.Printf("Handling Products Response: %v\n", res)
 	}
 }

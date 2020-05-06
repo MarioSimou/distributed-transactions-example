@@ -20,6 +20,7 @@ type EnvVariables struct {
 	DBUri string
 	Port string
 	QueueUri string
+	QueuesNames []string
 }
 
 type Controller struct {
@@ -261,7 +262,7 @@ func (contr *Controller) CreateOrder(c *gin.Context){
 
 	trans.Commit()
 
-	if e := contr.Publisher.Pub("products_created_order_success", dest); e != nil {
+	if e := contr.Publisher.Pub("products_create_order_success", dest, "someUniqueID"); e != nil {
 		c.JSON(http.StatusInternalServerError, response{Status: http.StatusInternalServerError,Success: false, Message: e.Error()})
 		return
 	}

@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	rabbitmq "products/internal/rabbitmq"
+	rabbitmq "customers/internal/rabbitmq"
 
 	mock "github.com/stretchr/testify/mock"
 )

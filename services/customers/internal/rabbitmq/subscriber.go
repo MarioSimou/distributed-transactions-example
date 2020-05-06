@@ -1,41 +1,72 @@
 package rabbitmq
 
-import "github.com/streadway/amqp"
+import (
+	"context"
+	"fmt"
+
+	"github.com/streadway/amqp"
+)
 
 var (
 	N_WORKERS = 10
 )
 
-type Subscription interface {
+type Subscriber interface {
 	GetQueue() string
 	GetHandlerFunc() HandlerFunc
-}
-
-type Message amqp.Delivery
-type HandlerFunc func(Message) error
-
-type SubResponse struct {
-	Ok bool
-	Err error
-}
-
-type Subscriber struct {
-	QueueName string
-	HandlerFunc HandlerFunc
+	GetContext() context.Context
 }
 
 type Subscribers []Subscriber
 
-func (sub Subscriber) GetQueue() string {
-	return sub.QueueName
+type Message amqp.Delivery
+type HandlerFunc func(Message, context.Context) error
+
+type SubscriptionResponse struct {
+	Ok bool
+	Err error
+	RequestID string
+	WorkerID string
 }
 
-func (sub Subscriber) GetHandlerFunc() HandlerFunc {
-	return sub.HandlerFunc
+type subscriber struct {
+	queueName string
+	handlerFunc HandlerFunc
+	ctx context.Context
 }
 
-func NewSubscription(subscribers Subscribers, conn ConnectionInterface)  (chan SubResponse,error) {
-	var subResChan = make(chan SubResponse, 1000)
+func (sub subscriber) GetQueue() string {
+	return sub.queueName
+}
+
+func (sub subscriber) GetHandlerFunc() HandlerFunc {
+	return sub.handlerFunc
+}
+
+func (sub subscriber) GetContext() context.Context {
+	return sub.ctx
+}
+
+func NewSubscriber(queueName string, handlerFunc HandlerFunc, ctx context.Context) Subscriber {
+
+	return subscriber{
+		queueName: queueName,
+		handlerFunc: handlerFunc,
+		ctx: ctx,
+	}
+}
+
+func NewSubscribers(subscribers... Subscriber) Subscribers{
+	var s = Subscribers{}
+	for _, subscriber := range subscribers {
+		s = append(s, subscriber)
+	}
+	return s
+}
+
+
+func NewSubscription(subscribers Subscribers, conn ConnectionInterface)  (chan SubscriptionResponse,error) {
+	var subResChan = make(chan SubscriptionResponse, 1000)
 
 	for _, subscriber := range subscribers {
 		if e := initSubscription(subscriber, subResChan, conn); e != nil {
@@ -46,15 +77,21 @@ func NewSubscription(subscribers Subscribers, conn ConnectionInterface)  (chan S
 	return subResChan, nil
 }
 
-func subWorker(localDeliveryChan chan Message, resChan chan SubResponse, handlerFunc HandlerFunc){
+func subWorker(localDeliveryChan chan Message, resChan chan SubscriptionResponse, handlerFunc HandlerFunc, ctx context.Context, workerID string){
 	var message = <- localDeliveryChan
-	if e := handlerFunc(message); e != nil {
-		resChan <- SubResponse{
+	if e := handlerFunc(message, ctx); e != nil {
+		resChan <- SubscriptionResponse{
 			Ok: false,
 			Err: e,
+			RequestID: message.CorrelationId,
+			WorkerID: workerID,
 		}
 	} else {
-		resChan <- SubResponse{Ok: true}
+		resChan <- SubscriptionResponse{
+			Ok: true,
+			RequestID: message.CorrelationId,
+			WorkerID: workerID,
+		}
 	}
 }
 
@@ -64,13 +101,14 @@ func subManager(deliveryChan <-chan amqp.Delivery, localDeliveryChan chan Messag
 	}
 }
 
-func initSubscription(subscription Subscription, subResChan chan SubResponse, conn ConnectionInterface) error  {
-	var queueName = subscription.GetQueue()
+func initSubscription(subscriber Subscriber, subResChan chan SubscriptionResponse, conn ConnectionInterface) error  {
+	var queueName = subscriber.GetQueue()
 	var channel ChannelInterface
 	var deliveryChan <-chan amqp.Delivery
 	var e error
 	var localDeliveryChan = make(chan Message, N_WORKERS)
-	var handlerFunc = subscription.GetHandlerFunc()
+	var handlerFunc = subscriber.GetHandlerFunc()
+	var context = subscriber.GetContext()
 
 	if channel, e = conn.Channel(queueName); e != nil {
 		return e
@@ -81,7 +119,8 @@ func initSubscription(subscription Subscription, subResChan chan SubResponse, co
 
 	// create n workers that will consume the queue's messages
 	for i:=0; i < N_WORKERS; i++ {
-		go subWorker(localDeliveryChan, subResChan, handlerFunc)
+		var workerID = fmt.Sprintf("%s - %d", queueName, i)
+		go subWorker(localDeliveryChan, subResChan, handlerFunc, context, workerID)
 	}
 	go subManager(deliveryChan, localDeliveryChan)
 

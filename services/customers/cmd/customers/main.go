@@ -2,11 +2,14 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"os"
+	"sync"
 
+	"context"
 	c "customers/internal"
+	r "customers/internal/rabbitmq"
+	s "customers/internal/subscribers"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
@@ -16,21 +19,42 @@ func main(){
 	var envVariables = c.EnvironmentVariables{
 		Port: "3000",
 		UIDomain: os.Getenv("UI_DOMAIN"),
+		QueueUri: os.Getenv("QUEUE_URI"),
+		QueuesNames: []string{
+			"customers_charge_customer_success",
+			"customers_charge_customer_failure",
+		},
 	}
+	var wg sync.WaitGroup
+	var publisher r.PublisherInterface
+	var subResChan chan r.SubscriptionResponse
+	var conn = &r.ConnectionStruct{}
 
-	var server = c.Server{
-		EnvVariables: envVariables,
-	}
 	var db, e = sql.Open("postgres", os.Getenv("DB_URI"))
 	if e != nil {
-		log.Fatalf("Error: %v", e)
+		log.Fatalf("Error: %v\n", e)
 	}
 	if e := db.Ping(); e != nil {
-		log.Fatalf("Error: %v", e)
+		log.Fatalf("Error: %v\n", e)
 	}
+	if e := conn.Start(envVariables.QueueUri); e != nil {
+		log.Fatalf("Error: %v\n", e)
+	}
+	if publisher, e = r.NewPublisher(envVariables.QueuesNames, conn); e != nil {
+		log.Fatalf("Error: %v\n", e)
+	}
+
+	var parent = context.Background()
+	var ctxDB = context.WithValue(parent, "DB", db)
+	var ctx = context.WithValue(ctxDB, "Publisher", publisher)
+	if subResChan, e = r.NewSubscription(s.GetSubscribers(ctx), conn); e != nil {
+		log.Fatalf("Error: %v\n", e)
+	}
+
 	var controller = c.Controller{
 		EnvVariables: envVariables,
 		DB: db,
+		Publisher: publisher,
 	}
 	var globMiddlewares = []gin.HandlerFunc{
 		c.HandleCORS,
@@ -82,6 +106,9 @@ func main(){
 			HandlerFunc: controller.LogOut,
 		},
 	}
-	var router = server.Setup(routes, globMiddlewares)
-	router.Run(fmt.Sprintf(":%s", envVariables.Port))
+
+	wg.Add(2)
+	go c.LaunchServer(routes, globMiddlewares, envVariables, &wg)
+	go c.HandleSubscribersResponses(subResChan,&wg)
+	wg.Wait()
 }

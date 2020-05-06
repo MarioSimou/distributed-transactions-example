@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"database/sql"
-	"fmt"
 	"log"
 	"os"
+
 	i "products/internal"
-	"products/internal/rabbitmq"
+	r "products/internal/rabbitmq"
+	s "products/internal/subscribers"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -17,19 +19,19 @@ func main(){
 	var e error
 	var db *sql.DB
 	var wg sync.WaitGroup
-	var publisher rabbitmq.PublisherInterface
-	var queueConn = &rabbitmq.ConnectionStruct{}
-	var subResChan chan rabbitmq.SubResponse
+	var publisher r.PublisherInterface
+	var queueConn = &r.ConnectionStruct{}
+	var subResChan chan r.SubscriptionResponse
 	var env = i.EnvVariables{
 		DBUri: os.Getenv("DB_URI"),
 		Port: os.Getenv("PORT"),
 		QueueUri: os.Getenv("QUEUE_URI"),
+		QueuesNames: []string{
+			"products_create_order_success",
+		},
 	}
 	var globalMiddlewares = []gin.HandlerFunc{
 		i.HandleCORS,
-	}
-	var queuesNames = []string{
-		"products_created_order_success",
 	}
 	
 	if db , e = sql.Open("postgres", env.DBUri); e != nil {
@@ -46,20 +48,14 @@ func main(){
 	}
 	defer queueConn.Close()
 
-	if publisher, e = rabbitmq.NewPublisher(queuesNames, queueConn); e != nil {
+	if publisher, e = r.NewPublisher(env.QueuesNames, queueConn); e != nil {
 		log.Fatalln(e)
 	}
 	
-	var subscribers = []rabbitmq.Subscriber{
-		rabbitmq.Subscriber{
-			QueueName: "products_created_order_success",
-			HandlerFunc: func(d rabbitmq.Message) error {
-				fmt.Printf("Message: %v\n", d)
-				return nil
-			},
-		},
-	}
-	if subResChan, e = rabbitmq.NewSubscription(subscribers, queueConn); e != nil {
+	var bg = context.Background()
+	var withDB = context.WithValue(bg,"DB", db)
+	var withPublisher = context.WithValue(withDB, "Publisher", publisher)
+	if subResChan, e = r.NewSubscription(s.GetSubscribers(withPublisher), queueConn); e != nil {
 		log.Fatalln(e)
 	}
 	
@@ -123,7 +119,7 @@ func main(){
 	}	
 	
 	wg.Add(2)
-	go i.LaunchServer(routes, globalMiddlewares, env, wg)
-	go i.HandleSubscribersResponses(subResChan, wg)
+	go i.LaunchServer(routes, globalMiddlewares, env, &wg)
+	go i.HandleSubscribersResponses(subResChan, &wg)
 	wg.Wait()
 }

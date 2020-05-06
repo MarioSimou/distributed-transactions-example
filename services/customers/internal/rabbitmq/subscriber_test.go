@@ -1,6 +1,7 @@
 package rabbitmq
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -14,19 +15,19 @@ type SubscriberSuite struct {
 func (ss *SubscriberSuite) TestSubWorker(){	
 	var table = []struct{
 		handlerFunc HandlerFunc
-		expectedRes SubResponse
+		expectedRes SubscriptionResponse
 	}{
 		{
-			handlerFunc: func(Message) error {
+			handlerFunc: func(Message,context.Context) error {
 				return nil
 			},
-			expectedRes: SubResponse{Ok: true},
+			expectedRes: SubscriptionResponse{Ok: true, WorkerID: "worker1",RequestID: "id"},
 		},
 		{
-			handlerFunc: func(Message) error {
+			handlerFunc: func(Message, context.Context) error {
 				return fmt.Errorf("Some Error")
 			},
-			expectedRes: SubResponse{Ok: false, Err: fmt.Errorf("Some Error")},
+			expectedRes: SubscriptionResponse{Ok: false, Err: fmt.Errorf("Some Error"), WorkerID: "worker1",RequestID: "id"},
 		},
 	}
 
@@ -34,10 +35,11 @@ func (ss *SubscriberSuite) TestSubWorker(){
 	var assert = assert.New(t)
 	for _, row := range table {
 		var localDeliveryChan = make(chan Message)
-		var resChan = make(chan SubResponse)
+		var resChan = make(chan SubscriptionResponse)
+		var ctx = context.Background()
 
-		go subWorker(localDeliveryChan, resChan, row.handlerFunc)
-		localDeliveryChan <- Message{ContentType: "application/json"}
+		go subWorker(localDeliveryChan, resChan, row.handlerFunc, ctx, "worker1")
+		localDeliveryChan <- Message{CorrelationId: "id",ContentType: "application/json"}
 
 		var res = <- resChan
 
